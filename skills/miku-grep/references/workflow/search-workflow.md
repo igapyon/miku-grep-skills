@@ -4,6 +4,14 @@
 
 `miku-grep` accepts JSON on stdin and writes JSON to stdout.
 
+`miku-grep` is a local filesystem search tool, comparable in access scope to `rg`, `grep`, or `find` when run by the same agent process. It does not create an additional sandbox boundary. It can search any path that the host environment and filesystem permissions allow the agent process to read.
+
+The confirmation step for searches outside the current repository or declared workspace is a consent gate for normal agent use, not an OS-level access restriction.
+
+This confirmation is currently handled by the agent workflow as an in-conversation consent gate. It is not the same as a host UI permission prompt such as a VS Code Allow button, and it is not enforced by the filesystem sandbox unless the host environment separately restricts the command.
+
+Because this gate is prompt-driven, it can fail to trigger if the agent does not follow the skill workflow or if another execution path invokes the runtime directly. Do not rely on it as a hard enforcement mechanism.
+
 Minimum request:
 
 ```json
