@@ -25,6 +25,7 @@ Typical requests:
 - The skill is opt-in and should not activate for generic search or code investigation requests.
 - The skill uses bundled CLI runtime artifacts before broad workspace exploration.
 - Java and Node.js runtime artifact file versions may differ from the `--version` output.
+- With current runtime artifacts, `excludeFileNamePatterns` and `excludeDirNamePatterns` replace the corresponding default exclude presets when specified. If they are omitted, default excludes are used.
 
 Expected runtime artifact names:
 
