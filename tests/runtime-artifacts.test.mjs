@@ -16,9 +16,9 @@ test("resolves newest runtime artifacts by file-name version", () => {
   const nodeSources = resolveRuntimeArtifact({ kind: "node-sources" });
 
   assert.equal(java.name, "miku-grep-0.8.1.jar");
-  assert.equal(node.name, "miku-grep-0.8.1.mjs");
+  assert.equal(node.name, "miku-grep-0.8.2.mjs");
   assert.equal(javaSources.name, "miku-grep-sources-0.8.1.jar");
-  assert.equal(nodeSources.name, "miku-grep-sources-0.8.1.tgz");
+  assert.equal(nodeSources.name, "miku-grep-sources-0.8.2.tgz");
   assert.equal(resolveRuntimeArtifactPath({ kind: "java" }), java.path);
 });
 

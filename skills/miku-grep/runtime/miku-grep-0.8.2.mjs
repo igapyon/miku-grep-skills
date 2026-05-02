@@ -4068,6 +4068,11 @@ SEE ALSO
 `;
 }
 
+// dist/string-order.js
+function compareStrings(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 // dist/regex-safety.js
 function hasNestedQuantifiedGroup(pattern) {
   const stack = [];
@@ -4406,7 +4411,7 @@ function finish(ok, code, message, effectiveRequest, matches, summary, diagnosti
   };
 }
 function sortDiagnostics(diagnostics) {
-  return diagnostics.sort((a, b) => (a.file ?? a.path ?? "").localeCompare(b.file ?? b.path ?? "") || (a.line ?? 0) - (b.line ?? 0) || a.code.localeCompare(b.code));
+  return diagnostics.sort((a, b) => compareStrings(a.file ?? a.path ?? "", b.file ?? b.path ?? "") || (a.line ?? 0) - (b.line ?? 0) || compareStrings(a.code, b.code));
 }
 
 // dist/search.js
@@ -4476,7 +4481,7 @@ async function traverse(state, absoluteDir, relativeDir, depth) {
     state.diagnostics.push({ severity: "warning", code: "directory_not_readable", message: "directory could not be read and was skipped", path: relativeDir || ".", skipped: true });
     return;
   }
-  entries.sort((a, b) => a.name.localeCompare(b.name));
+  entries.sort((a, b) => compareStrings(a.name, b.name));
   for (const entry of entries) {
     if (state.globalLimitReached)
       return;
@@ -4684,10 +4689,10 @@ function markTruncated(state, reason, message, details) {
   state.diagnostics.push({ severity: "info", code: reason, message, details });
 }
 function buildDetailMatches(state) {
-  return [...state.detailsByFile.entries()].sort(([a], [b]) => a.localeCompare(b)).flatMap(([, hits]) => hits.sort((a, b) => typeRank(a.type) - typeRank(b.type) || (a.type === "content" ? a.line : 0) - (b.type === "content" ? b.line : 0) || (a.type === "content" ? a.column : 0) - (b.type === "content" ? b.column : 0)));
+  return [...state.detailsByFile.entries()].sort(([a], [b]) => compareStrings(a, b)).flatMap(([, hits]) => hits.sort((a, b) => typeRank(a.type) - typeRank(b.type) || (a.type === "content" ? a.line : 0) - (b.type === "content" ? b.line : 0) || (a.type === "content" ? a.column : 0) - (b.type === "content" ? b.column : 0)));
 }
 function buildFileSummaryMatches(state) {
-  return [...state.summariesByFile.values()].sort((a, b) => a.file.localeCompare(b.file)).map((item) => ({ ...item, lines: item.lines.sort((a, b) => a - b) }));
+  return [...state.summariesByFile.values()].sort((a, b) => compareStrings(a.file, b.file)).map((item) => ({ ...item, lines: item.lines.sort((a, b) => a - b) }));
 }
 function typeRank(type) {
   return type === "filename" ? 0 : 1;
@@ -4836,7 +4841,7 @@ async function readStdin(stdin) {
   return Buffer.concat(chunks).toString("utf8");
 }
 async function packageVersion() {
-  const bundledVersion = "0.8.1";
+  const bundledVersion = "0.8.2";
   if (bundledVersion)
     return bundledVersion;
   try {
