@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import test from "node:test";
+
+test("SKILL keeps activation explicit and excludes MCP", () => {
+  const skill = fs.readFileSync("skills/miku-grep/SKILL.md", "utf8");
+
+  assert.match(skill, /explicitly says `miku-grep`/);
+  assert.match(skill, /Do not add MCP server behavior/);
+  assert.match(skill, /Do not call MCP tools as fallback/);
+});
+
+test("reference index links runtime and examples", () => {
+  const index = fs.readFileSync("skills/miku-grep/references/INDEX.md", "utf8");
+
+  assert.match(index, /runtime\/operations-map\.md/);
+  assert.match(index, /examples\/search-examples\.md/);
+});
+
+test("README points to developer documents", () => {
+  const readme = fs.readFileSync("README.md", "utf8");
+
+  assert.match(readme, /docs\/quickstart\.md/);
+  assert.match(readme, /docs\/development\.md/);
+  assert.match(readme, /MCP server integration/);
+});
