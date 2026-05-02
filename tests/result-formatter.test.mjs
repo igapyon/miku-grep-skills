@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { formatSearchResultSummary } from "../skills/miku-grep/lib/result-formatter.mjs";
@@ -83,3 +86,38 @@ test("reports truncation and limits file count", () => {
   assert.match(text, /1 more matched files omitted/);
   assert.match(text, /Warnings: 1/);
 });
+
+test("shows real root path when requested root resolves through a symlink", () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "miku-grep-format-root-"));
+  const realRoot = path.join(tempRoot, "real");
+  const linkRoot = path.join(tempRoot, "link");
+
+  try {
+    fs.mkdirSync(realRoot);
+    fs.symlinkSync(realRoot, linkRoot);
+
+    const text = formatSearchResultSummary({
+      ok: true,
+      effectiveRequest: {
+        root: linkRoot
+      },
+      summary: {
+        filesVisited: 0,
+        filesMatched: 0,
+        matches: 0,
+        truncated: false
+      },
+      matches: [],
+      diagnostics: []
+    });
+
+    assert.match(text, new RegExp(`Root: ${escapeRegExp(linkRoot)}`));
+    assert.match(text, new RegExp(`real path: ${escapeRegExp(fs.realpathSync(realRoot))}`));
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
