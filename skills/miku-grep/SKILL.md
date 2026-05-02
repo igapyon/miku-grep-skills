@@ -24,6 +24,8 @@ Without one of these triggers, answer normally or ask a brief clarifying questio
 - keep request and result data as structured JSON files or internal JSON objects
 - use `file-summary` output for broad agent context
 - use `detail` output only for focused inspection
+- keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
+- inspect `ok`, `error`, `summary.truncated`, `summary.truncatedReason`, and `diagnostics` before reporting the result
 - keep diagnostics visible when the runtime reports warnings or expected failures
 - do not reimplement grep/search logic in the skill layer
 

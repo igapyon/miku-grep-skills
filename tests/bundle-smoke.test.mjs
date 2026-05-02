@@ -37,6 +37,11 @@ test("builds bundle and runs runtime artifacts from isolated install tree", () =
     });
 
     const isolatedRuntimeRoot = path.resolve(isolatedSkillRoot, "miku-grep/runtime");
+    assert.equal(
+      fs.existsSync(path.resolve(isolatedSkillRoot, "miku-grep/.DS_Store")),
+      false
+    );
+
     const isolatedJavaRuntimePath = resolveRuntimeArtifactPath({
       kind: "java",
       runtimeRoot: isolatedRuntimeRoot

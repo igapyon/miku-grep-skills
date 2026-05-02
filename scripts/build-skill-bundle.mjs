@@ -27,11 +27,19 @@ function main() {
     resolveOptionalArtifact("node-sources")
   ].filter(Boolean);
 
-  fs.rmSync(bundleRoot, { recursive: true, force: true });
+  fs.rmSync(bundleRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 3,
+    retryDelay: 100
+  });
   fs.mkdirSync(bundleSkillsRoot, { recursive: true });
 
-  fs.cpSync(sourceSkillRoot, path.resolve(bundleSkillsRoot, "miku-grep"), {
-    recursive: true
+  const bundleSkillRoot = path.resolve(bundleSkillsRoot, "miku-grep");
+  fs.mkdirSync(bundleSkillRoot, { recursive: true });
+  fs.cpSync(sourceSkillRoot, bundleSkillRoot, {
+    recursive: true,
+    filter: shouldCopyBundleEntry
   });
 
   const included = [
@@ -69,4 +77,16 @@ function resolveOptionalArtifact(kind) {
   } catch {
     return null;
   }
+}
+
+function shouldCopyBundleEntry(sourcePath) {
+  const name = path.basename(sourcePath);
+  if (name === ".DS_Store") {
+    return false;
+  }
+  if (name === "tmp" || name === "output" || name === "state") {
+    const relativePath = path.relative(sourceSkillRoot, sourcePath);
+    return relativePath.split(path.sep).length > 1;
+  }
+  return true;
 }

@@ -26,6 +26,11 @@ Typical requests:
 - The skill uses bundled CLI runtime artifacts before broad workspace exploration.
 - Java and Node.js runtime artifact file versions may differ from the `--version` output.
 
+Expected runtime artifact names:
+
+- `skills/miku-grep/runtime/miku-grep-<version>.jar`
+- `skills/miku-grep/runtime/miku-grep-<version>.mjs`
+
 ## Developer Documents
 
 - [docs/quickstart.md](docs/quickstart.md)
