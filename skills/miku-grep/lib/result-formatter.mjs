@@ -1,4 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
+
 export function formatSearchResultSummary(result, {
+  cwd,
+  includeRoot = true,
   maxFiles = 5,
   maxSnippetsPerFile = 2
 } = {}) {
@@ -27,6 +32,10 @@ export function formatSearchResultSummary(result, {
       `${summary.filesVisited ?? 0} files visited`
     ].join(" ")
   );
+
+  if (includeRoot) {
+    appendRootResolution(lines, result, { cwd });
+  }
 
   if (summary.truncated) {
     lines.push(`Warning: result truncated${summary.truncatedReason ? ` (${summary.truncatedReason})` : ""}.`);
@@ -105,5 +114,33 @@ function appendDiagnostics(lines, diagnostics) {
 
   if (diagnostics.length > 5) {
     lines.push(`... ${diagnostics.length - 5} more diagnostics omitted from summary.`);
+  }
+}
+
+function appendRootResolution(lines, result, { cwd }) {
+  const root = result?.effectiveRequest?.root;
+  if (typeof root !== "string" || root.length === 0) {
+    return;
+  }
+
+  if (!path.isAbsolute(root) && !cwd) {
+    return;
+  }
+
+  const resolvedRoot = path.resolve(cwd ?? process.cwd(), root);
+  const realRoot = safeRealpath(resolvedRoot);
+  if (!realRoot || realRoot === resolvedRoot) {
+    lines.push(`Root: ${root}`);
+    return;
+  }
+
+  lines.push(`Root: ${root} (real path: ${realRoot})`);
+}
+
+function safeRealpath(value) {
+  try {
+    return fs.realpathSync(value);
+  } catch {
+    return null;
   }
 }
