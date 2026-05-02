@@ -152,10 +152,10 @@ var require_bom_handling = __commonJS({
 var require_merge_exports = __commonJS({
   "node_modules/iconv-lite/lib/helpers/merge-exports.js"(exports, module) {
     "use strict";
-    var hasOwn = typeof Object.hasOwn === "undefined" ? Function.call.bind(Object.prototype.hasOwnProperty) : Object.hasOwn;
+    var hasOwn2 = typeof Object.hasOwn === "undefined" ? Function.call.bind(Object.prototype.hasOwnProperty) : Object.hasOwn;
     function mergeModules(target, module2) {
       for (var key in module2) {
-        if (hasOwn(module2, key)) {
+        if (hasOwn2(module2, key)) {
           target[key] = module2[key];
         }
       }
@@ -3895,12 +3895,14 @@ REQUEST FIELDS
     MVP glob supports "*" and "?" within one basename.
 
   search.excludeFileNamePatterns
-    Optional additional basename glob excludes.
-    Default excludes are always applied.
+    Optional basename glob excludes.
+    When omitted, default excludes are used.
+    When specified, this value replaces default excludes.
 
   search.excludeDirNamePatterns
-    Optional additional directory basename glob excludes.
-    Default excludes are always applied.
+    Optional directory basename glob excludes.
+    When omitted, default excludes are used.
+    When specified, this value replaces default excludes.
 
   output.mode
     "file-summary" or "detail". Default: "file-summary".
@@ -4234,6 +4236,8 @@ function validateAndNormalize(request) {
   if (!isPlainObject(searchInput) || !isPlainObject(outputInput) || !isPlainObject(encodingInput)) {
     return invalid("invalid_request", "search, output, and encoding must be objects when specified");
   }
+  const hasExcludeFileNamePatterns = hasOwn(searchInput, "excludeFileNamePatterns");
+  const hasExcludeDirNamePatterns = hasOwn(searchInput, "excludeDirNamePatterns");
   const search = {
     target: typeof searchInput.target === "string" ? searchInput.target : DEFAULTS.search.target,
     recursive: searchInput.recursive ?? DEFAULTS.search.recursive,
@@ -4243,8 +4247,8 @@ function validateAndNormalize(request) {
     maxFilesVisited: searchInput.maxFilesVisited ?? DEFAULTS.search.maxFilesVisited,
     maxDirectoriesVisited: searchInput.maxDirectoriesVisited ?? DEFAULTS.search.maxDirectoriesVisited,
     includeFileNamePatterns: searchInput.includeFileNamePatterns ?? [],
-    excludeFileNamePatterns: searchInput.excludeFileNamePatterns ?? [],
-    excludeDirNamePatterns: searchInput.excludeDirNamePatterns ?? []
+    excludeFileNamePatterns: hasExcludeFileNamePatterns ? searchInput.excludeFileNamePatterns : DEFAULT_EXCLUDE_FILES,
+    excludeDirNamePatterns: hasExcludeDirNamePatterns ? searchInput.excludeDirNamePatterns : DEFAULT_EXCLUDE_DIRS
   };
   if (!["content", "filename", "both"].includes(search.target))
     return invalid("invalid_search_target", "search.target must be content, filename, or both");
@@ -4318,8 +4322,8 @@ function validateAndNormalize(request) {
       maxFilesVisited: search.maxFilesVisited,
       maxDirectoriesVisited: search.maxDirectoriesVisited,
       includeFileNamePatterns,
-      excludeFileNamePatterns: [...DEFAULT_EXCLUDE_FILES, ...excludeFileNamePatterns],
-      excludeDirNamePatterns: [...DEFAULT_EXCLUDE_DIRS, ...excludeDirNamePatterns]
+      excludeFileNamePatterns,
+      excludeDirNamePatterns
     },
     output: {
       mode: output.mode,
@@ -4364,6 +4368,9 @@ function findUnknownField(value, shape, prefix = "") {
 }
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 function isSafeInteger(value) {
   return Number.isSafeInteger(value);
@@ -4829,7 +4836,7 @@ async function readStdin(stdin) {
   return Buffer.concat(chunks).toString("utf8");
 }
 async function packageVersion() {
-  const bundledVersion = "0.5.0";
+  const bundledVersion = "0.8.1";
   if (bundledVersion)
     return bundledVersion;
   try {

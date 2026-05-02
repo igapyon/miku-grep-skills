@@ -22,7 +22,9 @@ Minimum request:
 - Use `detail` when the user needs exact lines and columns.
 - Keep `maxMatches`, `maxMatchesPerFile`, and `maxDepth` bounded for agent workflows.
 - Prefer the narrowest practical `root`.
+- If the requested `root` is outside the current repository or declared workspace, ask for explicit user confirmation before running the search. The confirmation should show the requested `root`, target, query type, and practical limits such as `maxDepth`, `includeFileNamePatterns`, and `maxMatches`.
 - Use `includeFileNamePatterns` when the user has named file types.
+- Treat `excludeFileNamePatterns` and `excludeDirNamePatterns` as replacement values for the corresponding default exclude presets. Omit them to keep defaults; use an empty array to disable that exclude category for the request.
 - Use `filename` target for path discovery before switching to content search.
 - Report `summary.truncated` and diagnostics concisely.
 

@@ -41,6 +41,12 @@ skills/miku-grep/runtime/
 
 The file-name version and `--version` output may differ.
 
+## Exclude Presets
+
+When `search.excludeFileNamePatterns` or `search.excludeDirNamePatterns` is omitted, `miku-grep` uses the corresponding default exclude preset.
+When either field is specified, that request value replaces the corresponding default preset.
+An empty array such as `excludeFileNamePatterns: []` means no file-name excludes for that request.
+
 ## Example Request
 
 ```json

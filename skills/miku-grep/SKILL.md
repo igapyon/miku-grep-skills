@@ -25,6 +25,7 @@ Without one of these triggers, answer normally or ask a brief clarifying questio
 - use `file-summary` output for broad agent context
 - use `detail` output only for focused inspection
 - keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
+- before searching outside the current repository or declared workspace, ask for explicit user confirmation and include the requested `root`, target, query type, and practical limits such as `maxDepth`, `include`, and `maxMatches`
 - inspect `ok`, `error`, `summary.truncated`, `summary.truncatedReason`, and `diagnostics` before reporting the result
 - keep diagnostics visible when the runtime reports warnings or expected failures
 - do not reimplement grep/search logic in the skill layer
