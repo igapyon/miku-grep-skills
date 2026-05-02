@@ -1,0 +1,79 @@
+name: Build And Upload Release Asset
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "GitHub Release tag to attach the skill bundle zip to"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name || github.event.inputs.tag_name, 'v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify runtime artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          java_runtime="$(find skills/miku-grep/runtime -maxdepth 1 -type f -name 'miku-grep-*.jar' ! -name 'miku-grep-sources-*.jar' | sort -V | tail -n 1)"
+          node_runtime="$(find skills/miku-grep/runtime -maxdepth 1 -type f -name 'miku-grep-*.mjs' | sort -V | tail -n 1)"
+          if [[ -z "${java_runtime}" ]]; then
+            echo "Java runtime artifact not found under skills/miku-grep/runtime/" >&2
+            exit 1
+          fi
+          if [[ -z "${node_runtime}" ]]; then
+            echo "Node.js runtime artifact not found under skills/miku-grep/runtime/" >&2
+            exit 1
+          fi
+          test -s "${java_runtime}"
+          test -s "${node_runtime}"
+          java -jar "${java_runtime}" --version
+          node "${node_runtime}" --version
+
+      - name: Build release bundle
+        run: npm run build
+
+      - name: Locate release zip
+        id: locate_zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip_path="$(find bundle -maxdepth 1 -type f -name 'igapyon-miku-grep-skills-*.zip' | sort -V | tail -n 1)"
+          if [[ -z "${zip_path}" ]]; then
+            echo "release zip not found under bundle/" >&2
+            exit 1
+          fi
+          echo "zip_path=${zip_path}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          files: ${{ steps.locate_zip.outputs.zip_path }}
+          draft: false
+          prerelease: false
