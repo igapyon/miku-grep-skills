@@ -172,3 +172,37 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
 - [x] Agent Skill 側で upstream の grep / search logic を再実装しない
 - [x] ブラウザ UI 操作を前提にしない
 - [x] generic grep skill として広く自動起動する設計にしない
+
+## 13. 次の強化
+
+- [x] skill-local CLI runner を追加する
+  - `skills/miku-grep/lib/cli-runner.mjs`
+  - request JSON を stdin に渡し、stdout JSON / stderr / exit status を扱う
+  - search logic は実装しない
+- [x] Java / Node.js runtime の同一 request parity test を追加する
+- [x] JSON result を agent 向けに短く要約する formatter を追加する
+  - 入力: `search_result_json`
+  - 出力: concise summary text
+  - 注意: 元 result JSON は捨てず、要約は表示用 artifact として扱う
+- [x] invalid request / expected failure の smoke test を追加する
+  - 空 query
+  - invalid regex
+- [x] invalid request / expected failure の smoke test を追加する
+  - root not found
+- [x] runner と formatter を組み合わせる利用例 test を追加する
+
+## 14. 品質強化
+
+- [x] `README` / `SKILL.md` / docs の整合テストを強くする
+  - policy 値
+  - runtime artifact 名
+  - operation 名
+  - artifact role
+  - MCP backend policy を入れないこと
+- [x] release bundle zip の中身を検査する test を追加する
+  - `skills/miku-grep/SKILL.md`
+  - runtime jar / mjs
+  - references
+  - lib
+  - `.DS_Store`、`tests/`、`docs/`、`bundle/`、`node_modules/` の除外
+- [x] request JSON -> runner -> result JSON -> formatter summary の workflow test を追加する

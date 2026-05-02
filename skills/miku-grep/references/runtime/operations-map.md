@@ -42,11 +42,32 @@ node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
 | `version` | `--version` | Smoke check only. Do not require exact file-name version match. |
 | `help` | `--help` | Runtime contract reference. |
 
+## Skill-Local Runner
+
+The helper `skills/miku-grep/lib/cli-runner.mjs` is a thin adapter over the CLI runtime.
+It may execute the bundled Java or Node.js artifact, but it must not implement search logic itself.
+
+Runner responsibilities:
+
+- build the CLI invocation from the operation registry
+- pass request JSON to stdin
+- collect stdout / stderr / exit status
+- optionally write stdout JSON to an output file
+
+Runtime responsibilities:
+
+- validate request JSON
+- traverse files
+- match content or filenames
+- emit result JSON and diagnostics
+
 ## Artifact Roles
 
 - `search_request_json`
 - `search_result_json`
+- `search_result_summary`
 - `operation_summary`
 - `diagnostics_log`
 
 Do not treat every JSON document as the same artifact role. A request JSON and result JSON are different contracts.
+`search_result_summary` is display text derived from the result JSON and must not replace the original result artifact.

@@ -39,3 +39,23 @@
   "output": { "mode": "detail", "maxMatches": 40, "maxLineLength": 300 }
 }
 ```
+
+## Runner Summary Flow
+
+Skill-local helper flow:
+
+```js
+import { runSearchJson } from "../../lib/cli-runner.mjs";
+import { formatSearchResultSummary } from "../../lib/result-formatter.mjs";
+
+const result = runSearchJson({
+  runtime: "java",
+  cwd: process.cwd(),
+  request
+});
+
+const visibleSummary = formatSearchResultSummary(result.json);
+```
+
+Keep `result.json` available as the structured artifact.
+Use `visibleSummary` only as concise display text for the conversation.
