@@ -5,7 +5,8 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 
 const ROOT = process.cwd();
-const zipPath = path.resolve(ROOT, "bundle/igapyon-miku-grep-skills-0.1.0.zip");
+const packageJson = JSON.parse(fs.readFileSync(path.resolve(ROOT, "package.json"), "utf8"));
+const zipPath = path.resolve(ROOT, `bundle/igapyon-miku-grep-skills-${packageJson.version}.zip`);
 
 test("release zip contains skill files and excludes development-only files", () => {
   execFileSync("npm", ["run", "build:bundle:zip"], {
