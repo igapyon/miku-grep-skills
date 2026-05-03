@@ -36,6 +36,29 @@ Typical requests:
 - The skill uses bundled CLI runtime artifacts before broad workspace exploration.
 - Java and Node.js runtime artifact file versions may differ from the `--version` output.
 - With current runtime artifacts, `excludeFileNamePatterns` and `excludeDirNamePatterns` replace the corresponding default exclude presets when specified. If they are omitted, default excludes are used.
+- A repository may define `.mikusoft/miku-grep.json` for repo-local defaults such as search limits, include patterns, encoding, and ignore behavior. Request JSON always takes precedence.
+
+## Java-Only Environments
+
+The files under `skills/miku-grep/lib/*.mjs` are Node.js helper scripts for
+agent environments that can run Node.js. They are not required to use the Java
+runtime directly.
+
+When only Java is available, call the bundled jar with request JSON on stdin and
+write result JSON from stdout:
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+```
+
+In that mode, `SKILL.md` and `references/` provide the operating instructions,
+and the Java jar performs request validation, filesystem traversal, matching,
+exclude handling, and diagnostics. Node.js-only conveniences such as helper-based
+runtime selection, result formatting, and bundle tests are unavailable.
+
+If a repo-local `.mikusoft/miku-grep.json` exists, copy applicable `search`,
+`output`, `encoding`, and `ignore` defaults into `request.json` manually
+according to the documented precedence.
 
 Expected runtime artifact names:
 
@@ -46,6 +69,7 @@ Expected runtime artifact names:
 
 - [docs/quickstart.md](docs/quickstart.md)
 - [docs/development.md](docs/development.md)
+- [docs/miku-grep-skills-config.md](docs/miku-grep-skills-config.md)
 - [docs/skill-installation.md](docs/skill-installation.md)
 - [skills/miku-grep/references/INDEX.md](skills/miku-grep/references/INDEX.md)
 

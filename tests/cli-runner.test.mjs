@@ -89,6 +89,53 @@ test("formats runner JSON result into an agent-facing summary", () => {
   }
 });
 
+test("runSearchJson applies repo-local config before invoking runtime", () => {
+  const tempRoot = createSearchFixture();
+  const javaRuntimePath = path.resolve(resolveRuntimeArtifactPath({ kind: "java" }));
+
+  try {
+    fs.mkdirSync(path.join(tempRoot, ".mikusoft"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempRoot, ".mikusoft", "miku-grep.json"),
+      `${JSON.stringify({
+        version: 1,
+        search: {
+          targets: ["content"],
+          recursive: true,
+          maxDepth: 4,
+          includeFileNamePatterns: ["*.txt"]
+        },
+        output: {
+          mode: "summary",
+          maxMatches: 10
+        }
+      })}\n`,
+      "utf8"
+    );
+
+    const result = runSearchJson({
+      request: {
+        version: 1,
+        root: ".",
+        query: { type: "literal", text: "needle" }
+      },
+      runtime: "java",
+      cwd: tempRoot,
+      javaRuntimePath
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.repoConfig.applied, true);
+    assert.deepEqual(result.repoConfig.appliedFields, ["search", "output"]);
+    assert.equal(result.json.ok, true);
+    assert.equal(result.json.summary.filesMatched, 1);
+    assert.equal(result.json.effectiveRequest.search.maxDepth, 4);
+    assert.equal(result.json.effectiveRequest.output.maxMatches, 10);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 function createSearchFixture() {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "miku-grep-runner-test-"));
   fs.mkdirSync(path.join(tempRoot, "src"), { recursive: true });

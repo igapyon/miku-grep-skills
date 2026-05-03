@@ -206,3 +206,18 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
   - lib
   - `.DS_Store`、`tests/`、`docs/`、`bundle/`、`node_modules/` の除外
 - [x] request JSON -> runner -> result JSON -> formatter summary の workflow test を追加する
+
+## 15. miku-readfile-skills から得た知見の反映
+
+- [x] Java-only 環境では `lib/*.mjs` helper が必須ではなく、Markdown 手順を読んで `request.json` を明示作成し、Java jar を直接呼べることを README / `SKILL.md` / references に明記する
+- [x] helper-generated summary は表示用の便宜であり、authoritative artifact は runtime の result JSON であることを workflow に明記する
+- [x] Node.js helper は runtime lookup / CLI invocation / result formatting / tests の補助であり、Java runtime の一部ではないことを明記する
+
+## 16. Repo-local config
+
+- [x] `.mikusoft/miku-grep.json` の仕様文書を追加する
+- [x] config の対象を `search` / `output` / `encoding` / `ignore` の既定値に限定する
+- [x] `root` / `query` は request JSON に明示する運用として固定する
+- [x] precedence を request JSON > repo-local config > runtime default として明記する
+- [x] Node.js helper で repo-local config を effective request JSON に shallow merge する
+- [x] Java-only flow では config 値を `request.json` に手動コピーする運用を明記する

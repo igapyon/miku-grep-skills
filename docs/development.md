@@ -3,6 +3,7 @@
 ## Documents
 
 - [quickstart.md](quickstart.md)
+- [miku-grep-skills-config.md](miku-grep-skills-config.md)
 - [skill-installation.md](skill-installation.md)
 - [../TODO.md](../TODO.md)
 - [../skills/miku-grep/SKILL.md](../skills/miku-grep/SKILL.md)
@@ -56,6 +57,7 @@ npm test
 The tests cover:
 
 - runtime artifact resolution
+- repo-local `.mikusoft/miku-grep.json` config merging
 - CLI/handoff backend policy
 - CLI invocation shape
 - runtime smoke checks

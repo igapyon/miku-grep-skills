@@ -28,6 +28,7 @@ test("release zip contains skill files and excludes development-only files", () 
   assertIncludes(entries, "skills/miku-grep/lib/backend-policy.mjs");
   assertIncludes(entries, "skills/miku-grep/lib/backend-operations.mjs");
   assertIncludes(entries, "skills/miku-grep/lib/cli-runner.mjs");
+  assertIncludes(entries, "skills/miku-grep/lib/repo-config.mjs");
   assertIncludes(entries, "skills/miku-grep/lib/result-formatter.mjs");
   assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.8.4.1.jar");
   assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.8.4.1.mjs");

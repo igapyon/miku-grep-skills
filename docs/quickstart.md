@@ -57,6 +57,20 @@ When `search.excludeFileNamePatterns` or `search.excludeDirNamePatterns` is omit
 When either field is specified, that request value replaces the corresponding default preset.
 An empty array such as `excludeFileNamePatterns: []` means no file-name excludes for that request.
 
+## Repo-Local Config
+
+A repository may define `.mikusoft/miku-grep.json` for defaults such as
+`search`, `output`, `encoding`, and `ignore`.
+
+Precedence is:
+
+1. request JSON
+2. `.mikusoft/miku-grep.json`
+3. runtime default
+
+Do not put `root` or `query` in repo-local config. See
+[miku-grep-skills-config.md](miku-grep-skills-config.md).
+
 ## Example Request
 
 ```json

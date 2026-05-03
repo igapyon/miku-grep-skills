@@ -35,6 +35,7 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 - use `summary` output for broad agent context
 - use `detail` output only for focused inspection
 - keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
+- if `.mikusoft/miku-grep.json` exists under the selected request root, apply it only as repo-local defaults for `search`, `output`, `encoding`, and `ignore`; explicit request JSON always takes precedence
 - before searching outside the current repository or declared workspace, ask for explicit user confirmation and include the requested `root`, target, query type, and practical limits such as `maxDepth`, `include`, and `maxMatches`
 - inspect `ok`, `error`, `summary.truncated`, `summary.truncatedReason`, and `diagnostics` before reporting the result
 - keep diagnostics visible when the runtime reports warnings or expected failures
@@ -80,6 +81,36 @@ For `cli-only` and `cli-preferred`, use this runtime order:
 Runtime artifact file versions may differ from the text returned by `--version`.
 Use file-name versions for artifact selection, and use `--version` only as a smoke check that the runtime starts.
 
+## Java-Only Operation
+
+The helper files under `lib/*.mjs` require Node.js. They are convenience helpers
+for runtime lookup, CLI invocation, result formatting, and tests. They are not
+part of the Java runtime.
+
+If the active environment has Java but does not have Node.js, use the Java jar
+directly:
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+```
+
+In Java-only mode, follow this `SKILL.md` and the references manually. The Java
+runtime remains responsible for request validation, filesystem traversal,
+matching content, matching file paths or directory paths, exclude handling, and
+diagnostics.
+
+When Node.js helpers are unavailable, the agent must do the helper work
+explicitly:
+
+1. read [references/workflow/search-workflow.md](references/workflow/search-workflow.md)
+2. check whether the target repository has `.mikusoft/miku-grep.json`
+3. prepare `request.json` with explicit `version`, `root`, `query`, `search`,
+   and `output`
+4. copy repo-local config values into `request.json` when needed
+5. run the Java jar directly
+6. inspect `result.json` and report truncation or diagnostics without hiding
+   runtime messages
+
 ## Error Handling
 
 Treat missing runtime artifacts, invalid JSON request shape, inaccessible root paths, malformed regex, and unsupported policy values as hard errors.
@@ -92,6 +123,7 @@ Treat runtime diagnostics such as unreadable files, skipped binary files, decode
 - Do not present this as a generic grep skill that captures ordinary search requests.
 - Do not replace the upstream `miku-grep` runtime implementation with skill-local search logic.
 - Do not hide diagnostics or truncation from the runtime result.
+- Do not put `root` or `query` defaults in `.mikusoft/miku-grep.json`; those belong in each request.
 
 ## References
 
