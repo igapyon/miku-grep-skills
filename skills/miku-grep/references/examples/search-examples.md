@@ -7,20 +7,32 @@
   "version": 1,
   "root": ".",
   "query": { "type": "literal", "text": "TODO" },
-  "search": { "target": "content", "recursive": true, "maxDepth": 8 },
-  "output": { "mode": "file-summary", "maxMatches": 50 }
+  "search": { "targets": ["content"], "recursive": true, "maxDepth": 8 },
+  "output": { "mode": "summary", "maxMatches": 50 }
 }
 ```
 
-## Filename Search
+## File Path Search
 
 ```json
 {
   "version": 1,
   "root": ".",
   "query": { "type": "regex", "text": ".*\\.md$" },
-  "search": { "target": "filename", "recursive": true, "maxDepth": 6 },
+  "search": { "targets": ["filepath"], "recursive": true, "maxDepth": 6 },
   "output": { "mode": "detail", "maxMatches": 100 }
+}
+```
+
+## Directory Search
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "query": { "type": "literal", "text": "docs" },
+  "search": { "targets": ["directory"], "recursive": true, "maxDepth": 6 },
+  "output": { "mode": "summary", "maxMatches": 100 }
 }
 ```
 
@@ -32,7 +44,7 @@
   "root": "src",
   "query": { "type": "literal", "text": "RepositoryMap" },
   "search": {
-    "target": "content",
+    "targets": ["content"],
     "recursive": true,
     "includeFileNamePatterns": ["*.java", "*.ts", "*.js"]
   },

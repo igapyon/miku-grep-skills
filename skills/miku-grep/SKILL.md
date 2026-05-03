@@ -32,7 +32,7 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 
 - prefer the bundled runtime artifacts in `runtime/`
 - keep request and result data as structured JSON files or internal JSON objects
-- use `file-summary` output for broad agent context
+- use `summary` output for broad agent context
 - use `detail` output only for focused inspection
 - keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
 - before searching outside the current repository or declared workspace, ask for explicit user confirmation and include the requested `root`, target, query type, and practical limits such as `maxDepth`, `include`, and `maxMatches`
@@ -49,12 +49,12 @@ Primary operation:
 Common search targets:
 
 - `content`
-- `filename`
-- `both`
+- `filepath`
+- `directory`
 
 Common output modes:
 
-- `file-summary`
+- `summary`
 - `detail`
 
 ## Runtime Discipline

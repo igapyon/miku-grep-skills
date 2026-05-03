@@ -22,13 +22,13 @@ test("runs the normal skill workflow from request JSON to visible summary", () =
       root: ".",
       query: { type: "literal", text: "target" },
       search: {
-        target: "content",
+        targets: ["content"],
         recursive: true,
         maxDepth: 4,
         includeFileNamePatterns: ["*.txt"]
       },
       output: {
-        mode: "file-summary",
+        mode: "summary",
         maxMatches: 10,
         maxSnippetsPerFile: 1
       }

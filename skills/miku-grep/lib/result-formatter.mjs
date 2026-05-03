@@ -55,8 +55,12 @@ export function formatSearchResultSummary(result, {
 }
 
 function formatMatch(match, { maxSnippetsPerFile }) {
-  if (match?.type === "filename") {
-    return `- ${match.file} (filename match)`;
+  if (match?.type === "filepath") {
+    return `- ${match.file} (filepath match)`;
+  }
+
+  if (match?.type === "directory") {
+    return `- ${match.path ?? "(unknown directory)"} (directory match)`;
   }
 
   if (match?.type === "content") {

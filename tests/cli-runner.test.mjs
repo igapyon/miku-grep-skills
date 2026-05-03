@@ -103,12 +103,12 @@ function defaultRequest() {
     root: ".",
     query: { type: "literal", text: "needle" },
     search: {
-      target: "content",
+      targets: ["content"],
       recursive: true,
       maxDepth: 4,
       includeFileNamePatterns: ["*.txt"]
     },
-    output: { mode: "file-summary", maxMatches: 10 }
+    output: { mode: "summary", maxMatches: 10 }
   };
 }
 
