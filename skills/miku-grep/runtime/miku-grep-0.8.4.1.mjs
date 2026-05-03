@@ -4737,6 +4737,9 @@ function findMatches(text, query) {
   }
   return hits;
 }
+function chooseRepresentativeMatch(matches) {
+  return matches.find((match) => match.text.length > 0) ?? matches[0] ?? null;
+}
 function makeSnippet(line, matchIndex, matchLength, maxLineLength) {
   if (line.length <= maxLineLength)
     return { text: line, trimmed: false };
@@ -4914,7 +4917,8 @@ async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreR
       state.summary.directoriesVisited += 1;
       if (hasTarget(state, "directory")) {
         state.summary.directoriesScanned += 1;
-        for (const hit of findMatches(relativePath, state.request.query)) {
+        const hit = chooseRepresentativeMatch(findMatches(relativePath, state.request.query));
+        if (hit) {
           addDirectoryHit(state, relativePath, { type: "directory", path: relativePath, matchedText: hit.text });
         }
       }
@@ -4953,7 +4957,8 @@ async function searchFile(state, absolutePath, relativePath, basename) {
   if (searchFilepath) {
     countedScanned = true;
     state.summary.filesScanned += 1;
-    for (const hit of findMatches(relativePath, state.request.query)) {
+    const hit = chooseRepresentativeMatch(findMatches(relativePath, state.request.query));
+    if (hit) {
       addFileHit(state, relativePath, { type: "filepath", file: relativePath, matchedText: hit.text });
     }
   }
