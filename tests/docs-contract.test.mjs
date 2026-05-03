@@ -7,6 +7,7 @@ const docs = {
   skill: read("skills/miku-grep/SKILL.md"),
   quickstart: read("docs/quickstart.md"),
   development: read("docs/development.md"),
+  config: read("docs/miku-grep-skills-config.md"),
   operationsMap: read("skills/miku-grep/references/runtime/operations-map.md"),
   workflow: read("skills/miku-grep/references/workflow/search-workflow.md")
 };
@@ -47,6 +48,40 @@ test("operation and artifact role vocabulary is stable across docs", () => {
 
   assert.match(docs.workflow, /search_result_json/);
   assert.match(docs.workflow, /search_result_summary/);
+});
+
+test("documents keep Java-only direct runtime operation explicit", () => {
+  for (const [name, text] of Object.entries({
+    readme: docs.readme,
+    skill: docs.skill,
+    operationsMap: docs.operationsMap,
+    workflow: docs.workflow
+  })) {
+    assert.match(text, /Java-[Oo]nly|Java jar|java -jar/, `${name} should document Java-only runtime use`);
+    assert.match(text, /request\.json/, `${name} should mention explicit request JSON`);
+    assert.match(text, /result\.json/, `${name} should mention runtime result JSON`);
+  }
+
+  assert.match(docs.skill, /lib\/\*\.mjs/);
+  assert.match(docs.operationsMap, /helper is optional/i);
+  assert.match(docs.workflow, /authoritative artifact/i);
+});
+
+test("documents repo-local miku-grep config contract", () => {
+  for (const [name, text] of Object.entries({
+    readme: docs.readme,
+    skill: docs.skill,
+    quickstart: docs.quickstart,
+    config: docs.config,
+    workflow: docs.workflow
+  })) {
+    assert.match(text, /\.mikusoft\/miku-grep\.json/, `${name} should mention repo-local config`);
+  }
+
+  assert.match(docs.config, /request JSON[\s\S]*repo-local `\.mikusoft\/miku-grep\.json`[\s\S]*runtime default/);
+  assert.match(docs.config, /Do not put `root` or `query`/);
+  assert.match(docs.config, /search[\s\S]*output[\s\S]*encoding[\s\S]*ignore/);
+  assert.match(docs.operationsMap, /Repo-local config merge responsibility/);
 });
 
 function read(filePath) {

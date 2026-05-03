@@ -21,3 +21,12 @@ Use this index when you need detailed guidance beyond the core rules in `SKILL.m
   - content search
   - filepath and directory search
   - detail output
+
+When Node.js helpers are unavailable, use the Java-only flow in
+[workflow/search-workflow.md](workflow/search-workflow.md). In that mode, the
+agent prepares `request.json` explicitly from these Markdown instructions and
+then runs the Java jar directly.
+
+Repo-local `.mikusoft/miku-grep.json` defaults are documented in the repository
+README and docs. In installed skill bundles, use `SKILL.md` and
+`workflow/search-workflow.md` for the operational summary.

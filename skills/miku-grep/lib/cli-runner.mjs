@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 
 import { buildCliInvocation } from "./backend-operations.mjs";
+import { applyMikuGrepRepoConfig } from "./repo-config.mjs";
 
 export function runCliOperation({
   operation,
@@ -57,8 +58,19 @@ export function runSearchJson({
   runtime = "java",
   cwd,
   javaRuntimePath,
-  nodeRuntimePath
+  nodeRuntimePath,
+  applyRepoConfig = true,
+  repoConfigPath
 } = {}) {
+  const prepared = applyRepoConfig
+    ? applyMikuGrepRepoConfig(request, { cwd, configPath: repoConfigPath })
+    : {
+        request,
+        configPath: null,
+        applied: false,
+        appliedFields: []
+      };
+
   const invocation = buildCliInvocation({
     operation: "version",
     runtime,
@@ -68,7 +80,7 @@ export function runSearchJson({
   const args = invocation.args.slice(0, -1);
   const result = spawnSync(invocation.command, args, {
     cwd,
-    input: `${JSON.stringify(request)}\n`,
+    input: `${JSON.stringify(prepared.request)}\n`,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024
   });
@@ -81,7 +93,13 @@ export function runSearchJson({
     status: result.status,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
-    json: parseJsonResult(result.stdout ?? "")
+    json: parseJsonResult(result.stdout ?? ""),
+    request: prepared.request,
+    repoConfig: {
+      path: prepared.configPath,
+      applied: prepared.applied,
+      appliedFields: prepared.appliedFields
+    }
   };
 }
 

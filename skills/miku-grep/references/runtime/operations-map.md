@@ -47,6 +47,13 @@ node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
 The helper `skills/miku-grep/lib/cli-runner.mjs` is a thin adapter over the CLI runtime.
 It may execute the bundled Java or Node.js artifact, but it must not implement search logic itself.
 
+The helper is optional. It requires Node.js. In a Java-only environment, skip the
+helper and call the Java runtime directly:
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+```
+
 Runner responsibilities:
 
 - build the CLI invocation from the operation registry
@@ -60,6 +67,13 @@ Runtime responsibilities:
 - traverse files
 - match content, file paths, or directory paths
 - emit result JSON and diagnostics
+
+Repo-local config merge responsibility:
+
+- Node.js helper may read `.mikusoft/miku-grep.json`
+- helper may merge `search`, `output`, `encoding`, and `ignore` defaults into
+  request JSON before runtime invocation
+- runtime remains responsible for validating the effective request
 
 ## Artifact Roles
 

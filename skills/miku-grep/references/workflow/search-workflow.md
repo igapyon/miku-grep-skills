@@ -30,11 +30,49 @@ Minimum request:
 - Use `detail` when the user needs exact lines and columns.
 - Keep `maxMatches`, `maxMatchesPerFile`, and `maxDepth` bounded for agent workflows.
 - Prefer the narrowest practical `root`.
+- If `.mikusoft/miku-grep.json` exists under the selected request root, use it only for repo-local defaults for `search`, `output`, `encoding`, and `ignore`. Explicit request JSON values always win.
 - If the requested `root` is outside the current repository or declared workspace, ask for explicit user confirmation before running the search. The confirmation should show the requested `root`, target, query type, and practical limits such as `maxDepth`, `includeFileNamePatterns`, and `maxMatches`.
 - Use `includeFileNamePatterns` when the user has named file types.
 - Treat `excludeFileNamePatterns` and `excludeDirNamePatterns` as replacement values for the corresponding default exclude presets. Omit them to keep defaults; use an empty array to disable that exclude category for the request.
 - Use `filepath` and `directory` targets for path discovery before switching to content search.
 - Report `summary.truncated` and diagnostics concisely.
+
+## Java-Only Flow
+
+If Node.js is unavailable, do not use the `lib/*.mjs` helpers. Prepare
+`request.json` and invoke the Java runtime directly:
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+```
+
+Then inspect `result.json`. The runtime result is the authoritative artifact.
+The helper-generated summary is a convenience, not a required product artifact.
+
+Agent checklist for Java-only mode:
+
+1. Read this workflow before building the request.
+2. Use the selected repository or workspace root as request `root`.
+3. Check whether `.mikusoft/miku-grep.json` exists under the selected root.
+4. Copy applicable `search`, `output`, `encoding`, and `ignore` defaults into
+   `request.json` where the request does not already define them.
+5. Keep `query`, `search.targets`, `maxDepth`, `maxMatches`, and include
+   patterns narrow enough for the task.
+6. Run the Java command.
+7. Treat `result.json` as the authoritative artifact and inspect `ok`, `error`,
+   `summary.truncated`, `summary.truncatedReason`, and `diagnostics`.
+
+Minimal Java-only request:
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "query": { "type": "literal", "text": "TODO" },
+  "search": { "targets": ["content"], "recursive": true, "maxDepth": 8 },
+  "output": { "mode": "summary", "maxMatches": 50 }
+}
+```
 
 ## Result Handling
 
