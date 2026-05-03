@@ -58,7 +58,7 @@ Runtime responsibilities:
 
 - validate request JSON
 - traverse files
-- match content or filenames
+- match content, file paths, or directory paths
 - emit result JSON and diagnostics
 
 ## Artifact Roles

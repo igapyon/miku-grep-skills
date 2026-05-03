@@ -26,6 +26,11 @@ Optional source artifacts:
 The file-name version is used to select the newest artifact.
 The runtime `--version` output is only a startup smoke check and does not need to match the file-name version exactly.
 
+The `miku-grep-skills` package version normally follows the main bundled `miku-grep` runtime version when the skill has been updated for that runtime contract.
+This is a release convention, not a hard invariant.
+Skill-only documentation, packaging, workflow, or test fixes may use an independent skill package version when the bundled runtime contract has not changed.
+Runtime artifact updates may also be staged before the skill package version is advanced, as long as README, `SKILL.md`, tests, and bundle output make the active contract clear.
+
 ## Local Work
 
 Use repository-root `workplace/` for local scratch files, upstream checks, generated outputs, and temporary verification files.

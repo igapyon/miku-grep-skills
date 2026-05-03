@@ -64,8 +64,8 @@ An empty array such as `excludeFileNamePatterns: []` means no file-name excludes
   "version": 1,
   "root": ".",
   "query": { "type": "literal", "text": "TODO" },
-  "search": { "target": "content", "recursive": true, "maxDepth": 8 },
-  "output": { "mode": "file-summary", "maxMatches": 50 }
+  "search": { "targets": ["content"], "recursive": true, "maxDepth": 8 },
+  "output": { "mode": "summary", "maxMatches": 50 }
 }
 ```
 

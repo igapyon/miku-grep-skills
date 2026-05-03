@@ -25,7 +25,7 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 Typical requests:
 
 - search file contents with a literal query
-- search filenames with a regex query
+- search file paths with a regex query
 - return file-level summaries for agent context
 - return detailed matches for focused inspection
 

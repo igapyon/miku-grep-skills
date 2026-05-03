@@ -19,5 +19,5 @@ Use this index when you need detailed guidance beyond the core rules in `SKILL.m
 
 - [examples/search-examples.md](examples/search-examples.md)
   - content search
-  - filename search
+  - filepath and directory search
   - detail output

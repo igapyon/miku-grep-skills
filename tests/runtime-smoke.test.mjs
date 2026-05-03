@@ -45,7 +45,7 @@ test("Java runtime executes a structured content search", () => {
   }
 });
 
-test("Node.js runtime executes a structured filename search", () => {
+test("Node.js runtime executes a structured filepath search", () => {
   const nodeRuntimePath = path.resolve(resolveRuntimeArtifactPath({ kind: "node" }));
   const tempRoot = createSearchFixture();
   try {
@@ -53,7 +53,7 @@ test("Node.js runtime executes a structured filename search", () => {
       version: 1,
       root: ".",
       query: { type: "regex", text: "notes\\.md$" },
-      search: { target: "filename", recursive: true, maxDepth: 4 },
+      search: { targets: ["filepath"], recursive: true, maxDepth: 4 },
       output: { mode: "detail", maxMatches: 10 }
     };
     const result = runSearch({
@@ -65,7 +65,7 @@ test("Node.js runtime executes a structured filename search", () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.summary.filesMatched, 1);
-    assert.equal(result.matches[0].type, "filename");
+    assert.equal(result.matches[0].type, "filepath");
     assert.equal(result.matches[0].file, "docs/notes.md");
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -84,7 +84,7 @@ test("runtime returns expected failure JSON for empty query", () => {
         version: 1,
         root: ".",
         query: { type: "literal", text: "" },
-        search: { target: "content" }
+        search: { targets: ["content"] }
       }
     });
 
@@ -109,7 +109,7 @@ test("runtime returns expected failure JSON for invalid regex", () => {
         version: 1,
         root: ".",
         query: { type: "regex", text: "[" },
-        search: { target: "content" }
+        search: { targets: ["content"] }
       }
     });
 
@@ -134,7 +134,7 @@ test("runtime returns expected failure JSON for missing root", () => {
         version: 1,
         root: "missing-root",
         query: { type: "literal", text: "needle" },
-        search: { target: "content" }
+        search: { targets: ["content"] }
       }
     });
 
@@ -164,8 +164,8 @@ function runSearch({
     version: 1,
     root: ".",
     query: { type: "literal", text: "needle" },
-    search: { target: "content", recursive: true, maxDepth: 4 },
-    output: { mode: "file-summary", maxMatches: 10 }
+    search: { targets: ["content"], recursive: true, maxDepth: 4 },
+    output: { mode: "summary", maxMatches: 10 }
   }
 }) {
   const stdout = execFileSync(command, args, {
