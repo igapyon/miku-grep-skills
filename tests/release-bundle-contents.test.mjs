@@ -30,8 +30,8 @@ test("release zip contains skill files and excludes development-only files", () 
   assertIncludes(entries, "skills/miku-grep/lib/cli-runner.mjs");
   assertIncludes(entries, "skills/miku-grep/lib/repo-config.mjs");
   assertIncludes(entries, "skills/miku-grep/lib/result-formatter.mjs");
-  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.8.4.1.jar");
-  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.8.4.1.mjs");
+  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.9.0.jar");
+  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.9.0.2.mjs");
 
   assert.equal(entries.some((entry) => entry.includes(".DS_Store")), false);
   assert.equal(entries.some((entry) => entry.startsWith("tests/")), false);

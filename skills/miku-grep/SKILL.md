@@ -33,7 +33,9 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 - prefer the bundled runtime artifacts in `runtime/`
 - keep request and result data as structured JSON files or internal JSON objects
 - use `summary` output for broad agent context
+- use `agent` output when the next step is choosing files or directories to read
 - use `detail` output only for focused inspection
+- use `mode: "listFiles"` when the task is file inventory rather than grep
 - keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
 - if `.mikusoft/miku-grep.json` exists under the selected request root, apply it only as repo-local defaults for `search`, `output`, `encoding`, and `ignore`; explicit request JSON always takes precedence
 - before searching outside the current repository or declared workspace, ask for explicit user confirmation and include the requested `root`, target, query type, and practical limits such as `maxDepth`, `include`, and `maxMatches`
@@ -46,6 +48,7 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 Primary operation:
 
 - `search`: run a `miku-grep` JSON request and return structured result JSON
+- `listFiles`: run a `mode: "listFiles"` inventory request and return `files[]` / `fileSummary`
 
 Common search targets:
 
@@ -57,6 +60,17 @@ Common output modes:
 
 - `summary`
 - `detail`
+- `agent`
+
+Common request features:
+
+- `detectGitRoot: true` to search from the repository root when invoked from a subdirectory
+- `query.case: "insensitive"` for case-insensitive literal or regex search
+- `query.type: "glob"` for root-relative path glob search
+- `output.sort: "relevance"` for deterministic candidate ordering in `summary` or `agent` output
+- `output.includeReadfileRequestHints: true` to produce `miku-readfile` handoff hints
+- `output.contextLines`, `contextLinesBefore`, or `contextLinesAfter` for focused `detail` content hits
+- `encoding.preset: "japanese-legacy"` for common Japanese legacy text file patterns
 
 ## Runtime Discipline
 

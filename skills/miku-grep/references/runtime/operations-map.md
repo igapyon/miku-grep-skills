@@ -5,6 +5,7 @@ Use this reference when you need the supported operation list or the preferred C
 ## Operations
 
 - `search`: run a `miku-grep` request JSON through stdin and receive result JSON through stdout
+- `listFiles`: run a `mode: "listFiles"` request and receive file inventory in `files[]` / `fileSummary`
 - `version`: check that a runtime artifact starts and identifies itself as `miku-grep`
 - `help`: read the runtime CLI contract
 
@@ -39,6 +40,7 @@ node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
 | Agent Skill operation | CLI backend shape | Notes |
 | --- | --- | --- |
 | `search` | `< request.json > result.json` | Primary JSON-in / JSON-out operation. |
+| `listFiles` | `< request.json > result.json` | Inventory operation using top-level `mode: "listFiles"`. |
 | `version` | `--version` | Smoke check only. Do not require exact file-name version match. |
 | `help` | `--help` | Runtime contract reference. |
 
@@ -80,6 +82,7 @@ Repo-local config merge responsibility:
 - `search_request_json`
 - `search_result_json`
 - `search_result_summary`
+- `file_inventory_result_json`
 - `operation_summary`
 - `diagnostics_log`
 
