@@ -6,6 +6,8 @@ Use this index when you need detailed guidance beyond the core rules in `SKILL.m
 
 - [workflow/search-workflow.md](workflow/search-workflow.md)
   - request construction
+  - file inventory requests
+  - agent candidate output
   - result handling
   - diagnostics
 
@@ -20,6 +22,9 @@ Use this index when you need detailed guidance beyond the core rules in `SKILL.m
 - [examples/search-examples.md](examples/search-examples.md)
   - content search
   - filepath and directory search
+  - glob path search
+  - file inventory
+  - agent candidate search
   - detail output
 
 When Node.js helpers are unavailable, use the Java-only flow in

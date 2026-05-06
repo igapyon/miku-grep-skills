@@ -57,6 +57,24 @@ When `search.excludeFileNamePatterns` or `search.excludeDirNamePatterns` is omit
 When either field is specified, that request value replaces the corresponding default preset.
 An empty array such as `excludeFileNamePatterns: []` means no file-name excludes for that request.
 
+## Current Request Features
+
+The bundled `0.9.x` runtimes support these agent-oriented fields:
+
+- `search.targets`: `content`, `filepath`, and `directory`
+- `mode: "search"` for grep-like search and `mode: "listFiles"` for file inventory
+- `query.type`: `literal`, `regex`, or root-relative path `glob`
+- `query.case: "insensitive"` for case-insensitive literal or regex search
+- `detectGitRoot: true` to search from the repository root when invoked from a subdirectory
+- `output.mode`: `summary`, `detail`, or `agent`
+- `output.sort: "relevance"` for deterministic candidate ranking in `summary` or `agent` mode
+- `output.includeReadfileRequestHints: true` for `miku-readfile` handoff hints
+- `output.contextLines`, `contextLinesBefore`, and `contextLinesAfter` for detail-mode context
+- `encoding.preset: "japanese-legacy"` for common Japanese legacy text file patterns
+
+In `listFiles` mode, result JSON uses top-level `files[]` and `fileSummary`.
+If a glob `query` is supplied, it filters the inventory by root-relative path.
+
 ## Repo-Local Config
 
 A repository may define `.mikusoft/miku-grep.json` for defaults such as
@@ -80,6 +98,38 @@ Do not put `root` or `query` in repo-local config. See
   "query": { "type": "literal", "text": "TODO" },
   "search": { "targets": ["content"], "recursive": true, "maxDepth": 8 },
   "output": { "mode": "summary", "maxMatches": 50 }
+}
+```
+
+## Agent Candidate Request
+
+Use `agent` output when the next step is choosing which files to read:
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "query": { "type": "literal", "text": "RepositoryMap", "case": "insensitive" },
+  "search": { "targets": ["filepath", "content"], "recursive": true, "maxDepth": 8 },
+  "output": {
+    "mode": "agent",
+    "sort": "relevance",
+    "includeReadfileRequestHints": true,
+    "maxMatches": 50
+  }
+}
+```
+
+## File Inventory Request
+
+Use `listFiles` for agent-readable file inventory:
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "mode": "listFiles",
+  "query": { "type": "glob", "text": "**/*.md" }
 }
 ```
 

@@ -3817,9 +3817,9 @@ var require_lib = __commonJS({
 });
 
 // dist/main.js
-import fs3 from "node:fs/promises";
+import fs4 from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
-import path4 from "node:path";
+import path5 from "node:path";
 import { pathToFileURL } from "node:url";
 
 // dist/help.js
@@ -3849,7 +3849,7 @@ MINIMAL REQUEST
   {
     "version": 1,
     "root": ".",
-    "query": { "type": "literal", "text": "RepositoryMap" },
+    "query": { "type": "literal", "text": "RepositoryMap", "case": "sensitive" },
     "search": { "targets": ["content"], "recursive": true, "maxDepth": 8 }
   }
 
@@ -3858,13 +3858,29 @@ REQUEST FIELDS
     Search entry directory. Relative paths are resolved from current working directory.
     Result file paths are root-relative and always use "/".
 
+  detectGitRoot
+    boolean. Default: false.
+    When true, search upward from root for .git and use that directory as effective root.
+    effectiveRequest.requestedRoot keeps the input root; effectiveRequest.root is the effective root.
+
   query.type
-    "literal" or "regex".
-    literal is case-sensitive substring search.
-    regex uses Node.js RegExp, line by line for content search. Regex flags are not accepted.
+    "literal", "regex", or "glob".
+    literal is substring search.
+    regex uses Node.js RegExp, line by line for content search. Regex flags are not accepted directly.
+    glob searches root-relative file or directory paths and supports path-level "**".
 
   query.text
     Non-empty search text or regex pattern.
+
+  query.case
+    "sensitive" or "insensitive". Default: "sensitive".
+    In regex search, "insensitive" is implemented as case-insensitive matching.
+    Ignored for glob search.
+
+  mode
+    "search" or "listFiles". Default: "search".
+    "search" requires query.
+    "listFiles" returns file inventory JSON. Optional query must use query.type "glob".
 
   search.targets
     Non-empty array of "filepath", "directory", and/or "content".
@@ -3906,7 +3922,12 @@ REQUEST FIELDS
     When specified, this value replaces default excludes.
 
   output.mode
-    "summary" or "detail". Default: "summary".
+    "summary", "detail", or "agent". Default: "summary".
+    "agent" returns candidate-oriented matches with read range suggestions.
+
+  output.sort
+    "path" or "relevance". Default: "path".
+    "relevance" sorts summary and agent candidates with deterministic heuristic metadata.
 
   output.maxMatches
     Default: 200. Maximum: 10000.
@@ -3921,6 +3942,10 @@ REQUEST FIELDS
   output.maxSnippetsPerFile
     summary representative snippet limit. Default: 3. Maximum: 100.
 
+  output.includeReadfileRequestHints
+    boolean. Default: false.
+    When true, result.readfileHints contains minimal miku-readfile requests for matched files.
+
   output.contextLines
     detail mode only. Shorthand for contextLinesBefore and contextLinesAfter.
     Default: 0. Maximum: 20.
@@ -3931,6 +3956,10 @@ REQUEST FIELDS
 
   encoding.default
     "utf-8" or "shift_jis". Default: "utf-8".
+
+  encoding.preset
+    Optional. Currently "japanese-legacy".
+    Applies Shift_JIS to common Japanese legacy text file patterns after explicit rules.
 
   encoding.rules
     Array of { "pathPattern": "...", "encoding": "..." } or
@@ -3965,6 +3994,8 @@ RESULT SHAPE
     "error": null,
     "effectiveRequest": {},
     "matches": [],
+    "files": [],
+    "fileSummary": {},
     "summary": {
       "filesVisited": 0,
       "directoriesVisited": 0,
@@ -3987,7 +4018,8 @@ FULL STDIN / STDOUT EXAMPLE
     {
       "version": 1,
       "root": ".",
-      "query": { "type": "literal", "text": "RepositoryMap" },
+      "mode": "search",
+      "query": { "type": "literal", "text": "RepositoryMap", "case": "sensitive" },
       "search": {
         "targets": ["content"],
         "recursive": true,
@@ -4003,8 +4035,11 @@ FULL STDIN / STDOUT EXAMPLE
       "ok": true,
       "error": null,
       "effectiveRequest": {
+        "requestedRoot": ".",
         "root": ".",
-        "query": { "type": "literal", "text": "RepositoryMap" },
+        "detectGitRoot": false,
+        "mode": "search",
+        "query": { "type": "literal", "text": "RepositoryMap", "case": "sensitive" },
         "search": {
           "targets": ["content"],
           "recursive": true,
@@ -4014,7 +4049,7 @@ FULL STDIN / STDOUT EXAMPLE
           "excludeFileNamePatterns": ["*.class", "*.jar", "*.zip", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.pdf", ".classpath", ".project"],
           "excludeDirNamePatterns": [".git", ".svn", "node_modules", "target", "build", "dist", ".gradle", ".idea", ".vscode", ".settings", "vendor"]
         },
-        "output": { "mode": "summary", "maxMatches": 20, "maxMatchesPerFile": 20, "maxLineLength": 240, "maxSnippetsPerFile": 3, "contextLinesBefore": 0, "contextLinesAfter": 0 },
+        "output": { "mode": "summary", "sort": "path", "maxMatches": 20, "maxMatchesPerFile": 20, "maxLineLength": 240, "maxSnippetsPerFile": 3, "includeReadfileRequestHints": false, "contextLinesBefore": 0, "contextLinesAfter": 0 },
         "encoding": { "default": "utf-8", "rules": [], "onDecodeError": "skip" },
         "ignore": { "mode": "auto", "sources": [".gitignore", ".ignore", ".git/info/exclude"], "useGlobalGitignore": false, "loadedSources": [] }
       },
@@ -4078,11 +4113,23 @@ SUMMARY MATCHES
   { "type": "directory", "path": "src",
     "matchTypes": ["directory"], "directoryMatched": true, "matchCount": 1 }
 
+AGENT MATCHES
+  { "type": "agentFile", "file": "src/RepositoryMap.java",
+    "targetKind": "file", "matchTypes": ["content"], "matchCount": 1,
+    "lines": [42], "representativeSnippets": [],
+    "readRanges": [{ "startLine": 37, "endLine": 47, "reason": "match" }] }
+  { "type": "agentDirectory", "path": "src",
+    "targetKind": "directory", "matchTypes": ["directory"], "matchCount": 1 }
+
+READFILE HINTS
+  { "file": "src/RepositoryMap.java",
+    "request": { "version": 1, "root": ".", "files": [{ "path": "src/RepositoryMap.java" }] } }
+
 COMMON DIAGNOSTIC CODES
   Validation / expected failures:
-    invalid_request, unknown_field, invalid_version, invalid_query_type,
+    invalid_request, unknown_field, invalid_version, invalid_mode, invalid_query_type, invalid_query_case,
     invalid_search_targets, invalid_search_target, duplicate_search_target,
-    invalid_output_mode, invalid_context_lines, invalid_regex,
+    invalid_output_mode, invalid_output_sort, invalid_context_lines, invalid_regex,
     regex_too_large, unsafe_regex,
     invalid_ignore_mode, invalid_ignore_sources, invalid_ignore_source, invalid_ignore_global,
     root_not_found, root_not_accessible, root_too_broad, empty_query,
@@ -4090,7 +4137,7 @@ COMMON DIAGNOSTIC CODES
     max_line_length_too_large, max_snippets_per_file_too_large,
     context_lines_too_large,
     max_file_bytes_too_large, max_line_chars_too_large, max_files_visited_too_large,
-    max_directories_visited_too_large, invalid_encoding, invalid_encoding_rule
+    max_directories_visited_too_large, invalid_encoding, invalid_encoding_preset, invalid_encoding_rule
   Runtime diagnostics:
     directory_not_readable, symlink_skipped, file_not_readable,
     max_file_bytes_exceeded, binary_file_skipped, decode_error,
@@ -4103,12 +4150,217 @@ EXAMPLES
   Content search:
     printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"TODO"},"search":{"targets":["content"]}}' | miku-grep
 
+  Case-insensitive content search:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"repositorymap","case":"insensitive"},"search":{"targets":["content"]}}' | miku-grep
+
+  File inventory:
+    printf '%s\\n' '{"version":1,"root":".","mode":"listFiles"}' | miku-grep
+
+  Glob path search:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"glob","text":"**/*.md"},"search":{"targets":["filepath"]}}' | miku-grep
+
+  Agent summary:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"RepositoryMap"},"output":{"mode":"agent"}}' | miku-grep
+
+  Agent summary with relevance sort:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"RepositoryMap"},"output":{"mode":"agent","sort":"relevance"}}' | miku-grep
+
+  Search with readfile hints:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"RepositoryMap"},"output":{"includeReadfileRequestHints":true}}' | miku-grep
+
+  Japanese legacy encoding preset:
+    printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"\u691C\u7D22\u8A9E"},"encoding":{"preset":"japanese-legacy"}}' | miku-grep
+
   Find-like path search:
     printf '%s\\n' '{"version":1,"root":".","query":{"type":"regex","text":"Repository|docs"},"search":{"targets":["filepath","directory"]},"output":{"mode":"detail"}}' | miku-grep
 
 SEE ALSO
   docs/miku-grep-cli-spec.md
 `;
+}
+
+// dist/list-files.js
+import fs2 from "node:fs/promises";
+import path3 from "node:path";
+
+// dist/glob.js
+function matchesAny(value, patterns) {
+  return patterns.some((pattern) => globMatch(value, pattern));
+}
+function globMatch(value, pattern) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+  return new RegExp(`^${escaped}$`).test(value);
+}
+function pathGlobMatch(value, pattern) {
+  const escaped = pattern.split("/").map((part) => {
+    if (part === "**")
+      return ".*";
+    return part.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+  }).join("/");
+  return new RegExp(`^${escaped}$`).test(value);
+}
+
+// dist/match-text.js
+function findMatches(text, query) {
+  if (query.type === "glob")
+    return pathGlobMatch(text, query.text) ? [{ index: 0, text }] : [];
+  if (query.type === "literal") {
+    if (query.case === "insensitive")
+      return findLiteralInsensitiveMatches(text, query.text);
+    const hits2 = [];
+    let from = 0;
+    while (from <= text.length) {
+      const index = text.indexOf(query.text, from);
+      if (index === -1)
+        break;
+      hits2.push({ index, text: query.text });
+      from = index + Math.max(query.text.length, 1);
+    }
+    return hits2;
+  }
+  const regex = new RegExp(query.text, query.case === "insensitive" ? "gi" : "g");
+  const hits = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    hits.push({ index: match.index, text: match[0] });
+    if (match[0].length === 0)
+      regex.lastIndex += 1;
+  }
+  return hits;
+}
+function findLiteralInsensitiveMatches(text, queryText) {
+  const regex = new RegExp(escapeRegExp(queryText), "gi");
+  const hits = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    hits.push({ index: match.index, text: match[0] });
+    if (match[0].length === 0)
+      regex.lastIndex += 1;
+  }
+  return hits;
+}
+function escapeRegExp(text) {
+  return text.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+}
+function chooseRepresentativeMatch(matches) {
+  return matches.find((match) => match.text.length > 0) ?? matches[0] ?? null;
+}
+function makeSnippet(line, matchIndex, matchLength, maxLineLength) {
+  if (line.length <= maxLineLength)
+    return { text: line, trimmed: false };
+  const matchEnd = matchIndex + matchLength;
+  let start = Math.max(0, Math.floor((matchIndex + matchEnd - maxLineLength) / 2));
+  if (start + maxLineLength > line.length)
+    start = Math.max(0, line.length - maxLineLength);
+  return { text: line.slice(start, start + maxLineLength), trimmed: true, ...start > 0 ? { textStartColumn: start + 1 } : {} };
+}
+function splitLines(text) {
+  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+}
+
+// dist/ignore-files.js
+import fs from "node:fs/promises";
+import path from "node:path";
+async function loadIgnoreRulesForDirectory(request, absoluteDir, relativeDir, diagnostics) {
+  if (request.ignore.mode === "none")
+    return [];
+  const rules = [];
+  for (const source of sourcesForDirectory(request.ignore.sources, relativeDir)) {
+    const sourcePath = relativeDir ? `${relativeDir}/${source}` : source;
+    const absolutePath = path.join(absoluteDir, source);
+    let text;
+    try {
+      text = await fs.readFile(absolutePath, "utf8");
+    } catch (error) {
+      if (isNodeError(error) && error.code === "ENOENT")
+        continue;
+      diagnostics.push({ severity: "warning", code: "ignore_file_not_readable", message: "ignore file could not be read and was skipped", path: sourcePath, skipped: true });
+      continue;
+    }
+    const loaded = { path: sourcePath, baseDirectory: relativeDir || ".", patterns: 0, unsupportedPatterns: 0 };
+    const parsed = parseIgnoreFile(text, sourcePath, relativeDir || ".", diagnostics, loaded);
+    request.ignore.loadedSources.push(loaded);
+    rules.push(...parsed);
+  }
+  return rules;
+}
+function isIgnoredByRules(rules, relativePath, isDirectory) {
+  let ignored = false;
+  for (const rule of rules) {
+    if (ruleMatches(rule, relativePath, isDirectory))
+      ignored = !rule.negated;
+  }
+  return ignored;
+}
+function sourcesForDirectory(sources, relativeDir) {
+  const local = sources.filter((source) => source === ".gitignore" || source === ".ignore");
+  if (relativeDir)
+    return local;
+  return [...local, ...sources.filter((source) => source === ".git/info/exclude")];
+}
+function parseIgnoreFile(text, sourcePath, baseDirectory, diagnostics, loaded) {
+  const rules = [];
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index] ?? "";
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed.startsWith("#"))
+      continue;
+    if (unsupportedPattern(trimmed)) {
+      loaded.unsupportedPatterns += 1;
+      diagnostics.push({
+        severity: "warning",
+        code: "unsupported_ignore_pattern",
+        message: "ignore pattern is not supported and was skipped",
+        path: sourcePath,
+        line: index + 1,
+        skipped: true,
+        details: { pattern: trimmed }
+      });
+      continue;
+    }
+    const negated = trimmed.startsWith("!");
+    const patternText = negated ? trimmed.slice(1) : trimmed;
+    const anchored = patternText.startsWith("/");
+    const directoryOnly = patternText.endsWith("/");
+    const pattern = patternText.replace(/^\/+/, "").replace(/\/+$/, "");
+    if (!pattern)
+      continue;
+    loaded.patterns += 1;
+    rules.push({ sourcePath, baseDirectory, pattern, negated, directoryOnly, anchored, hasSlash: pattern.includes("/") });
+  }
+  return rules;
+}
+function unsupportedPattern(pattern) {
+  return pattern.startsWith("\\#") || pattern.startsWith("\\!") || /[\[\]{}]/.test(pattern);
+}
+function ruleMatches(rule, relativePath, isDirectory) {
+  if (rule.directoryOnly && !isDirectory)
+    return false;
+  const relativeToBase = relativeFromBase(rule.baseDirectory, relativePath);
+  if (relativeToBase === null || relativeToBase === "")
+    return false;
+  if (!rule.hasSlash && !rule.anchored)
+    return globMatch(path.posix.basename(relativeToBase), rule.pattern);
+  return pathGlobMatch(relativeToBase, rule.pattern);
+}
+function relativeFromBase(baseDirectory, relativePath) {
+  if (baseDirectory === ".")
+    return relativePath;
+  if (relativePath === baseDirectory)
+    return "";
+  const prefix = `${baseDirectory}/`;
+  return relativePath.startsWith(prefix) ? relativePath.slice(prefix.length) : null;
+}
+function isNodeError(error) {
+  return error instanceof Error && "code" in error;
+}
+
+// dist/path-security.js
+import path2 from "node:path";
+function isPathInsideOrSame(candidate, base) {
+  const relative = path2.relative(base, candidate);
+  return relative === "" || !relative.startsWith("..") && !path2.isAbsolute(relative);
 }
 
 // dist/string-order.js
@@ -4218,14 +4470,17 @@ var DEFAULTS = {
   },
   output: {
     mode: "summary",
+    sort: "path",
     maxMatches: 200,
     maxMatchesPerFile: 20,
     maxLineLength: 240,
     maxSnippetsPerFile: 3,
+    includeReadfileRequestHints: false,
     contextLinesBefore: 0,
     contextLinesAfter: 0
   },
   encoding: {
+    preset: null,
     default: "utf-8",
     rules: [],
     onDecodeError: "skip"
@@ -4240,7 +4495,9 @@ var DEFAULTS = {
 var REQUEST_SHAPE = {
   version: true,
   root: true,
-  query: { type: true, text: true },
+  detectGitRoot: true,
+  mode: true,
+  query: { type: true, text: true, case: true },
   search: {
     targets: true,
     recursive: true,
@@ -4255,15 +4512,17 @@ var REQUEST_SHAPE = {
   },
   output: {
     mode: true,
+    sort: true,
     maxMatches: true,
     maxMatchesPerFile: true,
     maxLineLength: true,
     maxSnippetsPerFile: true,
+    includeReadfileRequestHints: true,
     contextLines: true,
     contextLinesBefore: true,
     contextLinesAfter: true
   },
-  encoding: { default: true, rules: true, onDecodeError: true },
+  encoding: { preset: true, default: true, rules: true, onDecodeError: true },
   ignore: { mode: true, sources: true, useGlobalGitignore: true }
 };
 
@@ -4278,24 +4537,39 @@ function validateAndNormalize(request) {
     return invalid("invalid_version", "version must be 1");
   if (typeof request.root !== "string" || request.root.length === 0)
     return invalid("invalid_request", "root must be a non-empty string");
-  if (!isPlainObject(request.query))
-    return invalid("invalid_request", "query must be an object");
-  if (!["literal", "regex"].includes(String(request.query.type)))
-    return invalid("invalid_query_type", "query.type must be literal or regex");
-  if (typeof request.query.text !== "string")
-    return invalid("invalid_request", "query.text must be a string");
-  if (request.query.text.length === 0)
-    return invalid("empty_query", "query.text must not be empty");
-  if (request.query.type === "regex") {
-    if (request.query.text.length > LIMITS.regexPatternLength)
-      return invalid("regex_too_large", "query.text regex pattern is too large");
-    try {
-      new RegExp(request.query.text);
-    } catch {
-      return invalid("invalid_regex", "query.text is not a valid regular expression");
+  const detectGitRoot = request.detectGitRoot ?? false;
+  if (typeof detectGitRoot !== "boolean")
+    return invalid("invalid_request", "detectGitRoot must be boolean");
+  const mode = request.mode ?? "search";
+  if (mode !== "search" && mode !== "listFiles")
+    return invalid("invalid_mode", "mode must be search or listFiles");
+  let query;
+  if (mode === "search" || hasOwn(request, "query")) {
+    if (!isPlainObject(request.query))
+      return invalid("invalid_request", "query must be an object");
+    if (!["literal", "regex", "glob"].includes(String(request.query.type)))
+      return invalid("invalid_query_type", "query.type must be literal, regex, or glob");
+    if (typeof request.query.text !== "string")
+      return invalid("invalid_request", "query.text must be a string");
+    if (request.query.text.length === 0)
+      return invalid("empty_query", "query.text must not be empty");
+    const queryCase = request.query.case ?? "sensitive";
+    if (queryCase !== "sensitive" && queryCase !== "insensitive")
+      return invalid("invalid_query_case", "query.case must be sensitive or insensitive");
+    if (mode === "listFiles" && request.query.type !== "glob")
+      return invalid("invalid_query_type", "listFiles query.type must be glob");
+    if (request.query.type === "regex") {
+      if (request.query.text.length > LIMITS.regexPatternLength)
+        return invalid("regex_too_large", "query.text regex pattern is too large");
+      try {
+        new RegExp(request.query.text);
+      } catch {
+        return invalid("invalid_regex", "query.text is not a valid regular expression");
+      }
+      if (hasNestedQuantifiedGroup(request.query.text))
+        return invalid("unsafe_regex", "query.text regex pattern has nested quantified groups");
     }
-    if (hasNestedQuantifiedGroup(request.query.text))
-      return invalid("unsafe_regex", "query.text regex pattern has nested quantified groups");
+    query = { type: request.query.type, text: request.query.text, case: queryCase };
   }
   const searchInput = request.search ?? {};
   const outputInput = request.output ?? {};
@@ -4326,6 +4600,8 @@ function validateAndNormalize(request) {
   }
   if (new Set(search.targets).size !== search.targets.length)
     return invalid("duplicate_search_target", "search.targets must not contain duplicate values");
+  if (mode === "search" && query?.type === "glob" && search.targets.includes("content"))
+    return invalid("invalid_search_target", "query.type glob supports filepath and directory targets only");
   if (typeof search.recursive !== "boolean")
     return invalid("invalid_request", "search.recursive must be boolean");
   for (const check of [
@@ -4344,21 +4620,27 @@ function validateAndNormalize(request) {
   }
   const output = {
     mode: typeof outputInput.mode === "string" ? outputInput.mode : DEFAULTS.output.mode,
+    sort: outputInput.sort ?? DEFAULTS.output.sort,
     maxMatches: outputInput.maxMatches ?? DEFAULTS.output.maxMatches,
     maxMatchesPerFile: outputInput.maxMatchesPerFile ?? DEFAULTS.output.maxMatchesPerFile,
     maxLineLength: outputInput.maxLineLength ?? DEFAULTS.output.maxLineLength,
     maxSnippetsPerFile: outputInput.maxSnippetsPerFile ?? DEFAULTS.output.maxSnippetsPerFile,
+    includeReadfileRequestHints: outputInput.includeReadfileRequestHints ?? DEFAULTS.output.includeReadfileRequestHints,
     contextLines: outputInput.contextLines,
     contextLinesBefore: outputInput.contextLinesBefore,
     contextLinesAfter: outputInput.contextLinesAfter
   };
-  if (!["detail", "summary"].includes(output.mode))
-    return invalid("invalid_output_mode", "output.mode must be detail or summary");
+  if (!["detail", "summary", "agent"].includes(output.mode))
+    return invalid("invalid_output_mode", "output.mode must be detail, summary, or agent");
+  if (output.sort !== "path" && output.sort !== "relevance")
+    return invalid("invalid_output_sort", "output.sort must be path or relevance");
+  if (typeof output.includeReadfileRequestHints !== "boolean")
+    return invalid("invalid_request", "output.includeReadfileRequestHints must be boolean");
   const hasContextLines = hasOwn(outputInput, "contextLines");
   const hasContextLinesBefore = hasOwn(outputInput, "contextLinesBefore");
   const hasContextLinesAfter = hasOwn(outputInput, "contextLinesAfter");
   const hasAnyContextOption = hasContextLines || hasContextLinesBefore || hasContextLinesAfter;
-  if (output.mode === "summary" && hasAnyContextOption)
+  if (output.mode !== "detail" && hasAnyContextOption)
     return invalid("invalid_context_lines", "context lines are only supported in detail mode");
   if (hasContextLines && (hasContextLinesBefore || hasContextLinesAfter)) {
     return invalid("invalid_context_lines", "output.contextLines cannot be combined with contextLinesBefore or contextLinesAfter");
@@ -4387,10 +4669,13 @@ function validateAndNormalize(request) {
     }
   }
   const encoding = {
+    preset: encodingInput.preset ?? DEFAULTS.encoding.preset,
     default: typeof encodingInput.default === "string" ? encodingInput.default : DEFAULTS.encoding.default,
     rules: encodingInput.rules ?? [],
     onDecodeError: encodingInput.onDecodeError ?? DEFAULTS.encoding.onDecodeError
   };
+  if (encoding.preset !== null && encoding.preset !== "japanese-legacy")
+    return invalid("invalid_encoding_preset", "encoding.preset must be japanese-legacy");
   if (!isSupportedEncoding(encoding.default))
     return invalid("invalid_encoding", "encoding.default must be utf-8 or shift_jis");
   if (encoding.onDecodeError !== "skip")
@@ -4431,10 +4716,14 @@ function validateAndNormalize(request) {
   const excludeDirNamePatterns = search.excludeDirNamePatterns;
   const targets = search.targets;
   const encodingRules = encoding.rules;
+  const encodingPreset = encoding.preset;
   const ignoreSources = ignore.mode === "none" ? [] : ignore.sources;
   const effectiveRequest = {
+    requestedRoot: request.root,
     root: request.root,
-    query: { type: request.query.type, text: request.query.text },
+    detectGitRoot,
+    mode,
+    ...query ? { query } : {},
     search: {
       targets,
       recursive: search.recursive,
@@ -4449,14 +4738,17 @@ function validateAndNormalize(request) {
     },
     output: {
       mode: output.mode,
+      sort: output.sort,
       maxMatches: output.maxMatches,
       maxMatchesPerFile: output.maxMatchesPerFile,
       maxLineLength: output.maxLineLength,
       maxSnippetsPerFile: output.maxSnippetsPerFile,
+      includeReadfileRequestHints: output.includeReadfileRequestHints,
       contextLinesBefore,
       contextLinesAfter
     },
     encoding: {
+      preset: encodingPreset,
       default: encoding.default,
       rules: encodingRules,
       onDecodeError: "skip"
@@ -4535,13 +4827,16 @@ function createSummary() {
     truncatedReason: null
   };
 }
-function finish(ok, code, message, effectiveRequest, matches, summary, diagnostics) {
+function finish(ok, code, message, effectiveRequest, matches, summary, diagnostics, extra) {
   return {
     version: VERSION,
     ok,
     error: ok ? null : { code: code ?? "invalid_request", message: message ?? "request failed" },
     effectiveRequest,
     matches,
+    ...extra?.files ? { files: extra.files } : {},
+    ...extra?.fileSummary ? { fileSummary: extra.fileSummary } : {},
+    ...extra?.readfileHints ? { readfileHints: extra.readfileHints } : {},
     summary: { ...summary, diagnostics: diagnostics.length },
     diagnostics: sortDiagnostics(diagnostics)
   };
@@ -4550,9 +4845,138 @@ function sortDiagnostics(diagnostics) {
   return diagnostics.sort((a, b) => compareStrings(a.file ?? a.path ?? "", b.file ?? b.path ?? "") || (a.line ?? 0) - (b.line ?? 0) || compareStrings(a.code, b.code));
 }
 
+// dist/list-files.js
+async function runListFiles(request, rootPath, diagnostics) {
+  const state = {
+    request,
+    rootPath,
+    diagnostics,
+    summary: createSummary(),
+    files: [],
+    directoriesEntered: 0,
+    globalLimitReached: false
+  };
+  await traverse(state, rootPath, "", 0, []);
+  state.files.sort((a, b) => compareStrings(a.path, b.path));
+  state.summary.diagnostics = diagnostics.length;
+  return { files: state.files, fileSummary: summarizeFiles(state.files), summary: state.summary };
+}
+async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreRules) {
+  if (state.globalLimitReached)
+    return;
+  if (state.directoriesEntered >= state.request.search.maxDirectoriesVisited) {
+    markTruncated(state, "max_directories_visited", "file listing stopped because maxDirectoriesVisited was reached", { maxDirectoriesVisited: state.request.search.maxDirectoriesVisited });
+    state.globalLimitReached = true;
+    return;
+  }
+  state.directoriesEntered += 1;
+  if (!relativeDir)
+    state.summary.directoriesVisited += 1;
+  const safeDir = await resolveInsideRoot(state, absoluteDir, relativeDir || ".");
+  if (!safeDir)
+    return;
+  let entries;
+  try {
+    entries = await fs2.readdir(safeDir, { withFileTypes: true });
+  } catch {
+    state.diagnostics.push({ severity: "warning", code: "directory_not_readable", message: "directory could not be read and was skipped", path: relativeDir || ".", skipped: true });
+    return;
+  }
+  const ignoreRules = [...inheritedIgnoreRules, ...await loadIgnoreRulesForDirectory(state.request, safeDir, relativeDir, state.diagnostics)];
+  entries.sort((a, b) => compareStrings(a.name, b.name));
+  for (const entry of entries) {
+    if (state.globalLimitReached)
+      return;
+    const relativePath = relativeDir ? `${relativeDir}/${entry.name}` : entry.name;
+    const absolutePath = path3.join(safeDir, entry.name);
+    if (entry.isSymbolicLink()) {
+      state.diagnostics.push({ severity: "info", code: "symlink_skipped", message: "symlink was skipped", path: relativePath, skipped: true });
+      continue;
+    }
+    if (entry.isDirectory()) {
+      if (matchesAny(entry.name, state.request.search.excludeDirNamePatterns))
+        continue;
+      if (isIgnoredByRules(ignoreRules, relativePath, true)) {
+        state.summary.directoriesIgnored += 1;
+        continue;
+      }
+      state.summary.directoriesVisited += 1;
+      if (!state.request.search.recursive || depth >= state.request.search.maxDepth)
+        continue;
+      await traverse(state, absolutePath, relativePath, depth + 1, ignoreRules);
+      continue;
+    }
+    if (!entry.isFile())
+      continue;
+    if (state.summary.filesVisited >= state.request.search.maxFilesVisited) {
+      markTruncated(state, "max_files_visited", "file listing stopped because maxFilesVisited was reached", { maxFilesVisited: state.request.search.maxFilesVisited });
+      state.globalLimitReached = true;
+      return;
+    }
+    state.summary.filesVisited += 1;
+    if (isIgnoredByRules(ignoreRules, relativePath, false)) {
+      state.summary.filesIgnored += 1;
+      continue;
+    }
+    if (!candidateFile(state, entry.name))
+      continue;
+    state.summary.filesScanned += 1;
+    if (state.request.query && findMatches(relativePath, state.request.query).length === 0)
+      continue;
+    state.files.push({
+      path: relativePath,
+      extension: fileExtension(entry.name),
+      directory: relativeDir || "."
+    });
+  }
+}
+function candidateFile(state, basename) {
+  const { includeFileNamePatterns, excludeFileNamePatterns } = state.request.search;
+  if (includeFileNamePatterns.length > 0 && !matchesAny(basename, includeFileNamePatterns))
+    return false;
+  return !matchesAny(basename, excludeFileNamePatterns);
+}
+async function resolveInsideRoot(state, absolutePath, relativePath) {
+  let realPath;
+  try {
+    realPath = await fs2.realpath(absolutePath);
+  } catch {
+    state.diagnostics.push({ severity: "warning", code: "file_not_readable", message: "path could not be resolved and was skipped", path: relativePath, skipped: true });
+    return null;
+  }
+  if (!isPathInsideOrSame(realPath, state.rootPath)) {
+    state.diagnostics.push({ severity: "warning", code: "path_escape_skipped", message: "path resolved outside root and was skipped", path: relativePath, skipped: true });
+    return null;
+  }
+  return realPath;
+}
+function summarizeFiles(files) {
+  return {
+    files: files.length,
+    extensions: summarizeBy(files.map((file) => file.extension), "extension"),
+    directories: summarizeBy(files.map((file) => file.directory), "path")
+  };
+}
+function summarizeBy(values, key) {
+  const counts = /* @__PURE__ */ new Map();
+  for (const value of values)
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts.entries()].sort(([a, aCount], [b, bCount]) => bCount - aCount || compareStrings(a, b)).map(([value, count]) => ({ [key]: value, count }));
+}
+function fileExtension(basename) {
+  return path3.posix.extname(basename).toLowerCase();
+}
+function markTruncated(state, reason, message, details) {
+  if (!state.summary.truncated) {
+    state.summary.truncated = true;
+    state.summary.truncatedReason = reason;
+  }
+  state.diagnostics.push({ severity: "info", code: reason, message, details });
+}
+
 // dist/search.js
-import fs2 from "node:fs/promises";
-import path3 from "node:path";
+import fs3 from "node:fs/promises";
+import path4 from "node:path";
 
 // dist/context-lines.js
 function makeContext(lines, matchIndex, options, onLineSkipped) {
@@ -4584,25 +5008,7 @@ function makeContextLine(line, lineNumber, maxLineLength) {
 
 // dist/encoding.js
 var import_iconv_lite = __toESM(require_lib(), 1);
-
-// dist/glob.js
-function matchesAny(value, patterns) {
-  return patterns.some((pattern) => globMatch(value, pattern));
-}
-function globMatch(value, pattern) {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
-  return new RegExp(`^${escaped}$`).test(value);
-}
-function pathGlobMatch(value, pattern) {
-  const escaped = pattern.split("/").map((part) => {
-    if (part === "**")
-      return ".*";
-    return part.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
-  }).join("/");
-  return new RegExp(`^${escaped}$`).test(value);
-}
-
-// dist/encoding.js
+var JAPANESE_LEGACY_SHIFT_JIS_FILE_PATTERNS = ["*.txt", "*.csv", "*.tsv", "*.log", "*.properties", "*.java"];
 function selectEncoding(config, relativePath, basename) {
   for (const rule of config.rules) {
     if (rule.pathPattern && pathGlobMatch(relativePath, rule.pathPattern)) {
@@ -4614,6 +5020,13 @@ function selectEncoding(config, relativePath, basename) {
       return { encoding: rule.encoding, encodingRule: { type: "fileNamePattern", pattern: rule.fileNamePattern } };
     }
   }
+  if (config.preset === "japanese-legacy") {
+    for (const pattern of JAPANESE_LEGACY_SHIFT_JIS_FILE_PATTERNS) {
+      if (globMatch(basename, pattern)) {
+        return { encoding: "shift_jis", encodingRule: { type: "preset", preset: "japanese-legacy", pattern } };
+      }
+    }
+  }
   return { encoding: config.default, encodingRule: { type: "default" } };
 }
 function decode(bytes, encoding) {
@@ -4622,148 +5035,10 @@ function decode(bytes, encoding) {
   return import_iconv_lite.default.decode(Buffer.from(bytes), "shift_jis");
 }
 
-// dist/ignore-files.js
-import fs from "node:fs/promises";
-import path from "node:path";
-async function loadIgnoreRulesForDirectory(request, absoluteDir, relativeDir, diagnostics) {
-  if (request.ignore.mode === "none")
-    return [];
-  const rules = [];
-  for (const source of sourcesForDirectory(request.ignore.sources, relativeDir)) {
-    const sourcePath = relativeDir ? `${relativeDir}/${source}` : source;
-    const absolutePath = path.join(absoluteDir, source);
-    let text;
-    try {
-      text = await fs.readFile(absolutePath, "utf8");
-    } catch (error) {
-      if (isNodeError(error) && error.code === "ENOENT")
-        continue;
-      diagnostics.push({ severity: "warning", code: "ignore_file_not_readable", message: "ignore file could not be read and was skipped", path: sourcePath, skipped: true });
-      continue;
-    }
-    const loaded = { path: sourcePath, baseDirectory: relativeDir || ".", patterns: 0, unsupportedPatterns: 0 };
-    const parsed = parseIgnoreFile(text, sourcePath, relativeDir || ".", diagnostics, loaded);
-    request.ignore.loadedSources.push(loaded);
-    rules.push(...parsed);
-  }
-  return rules;
-}
-function isIgnoredByRules(rules, relativePath, isDirectory) {
-  return rules.some((rule) => ruleMatches(rule, relativePath, isDirectory));
-}
-function sourcesForDirectory(sources, relativeDir) {
-  const local = sources.filter((source) => source === ".gitignore" || source === ".ignore");
-  if (relativeDir)
-    return local;
-  return [...local, ...sources.filter((source) => source === ".git/info/exclude")];
-}
-function parseIgnoreFile(text, sourcePath, baseDirectory, diagnostics, loaded) {
-  const rules = [];
-  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-  for (let index = 0; index < lines.length; index += 1) {
-    const raw = lines[index] ?? "";
-    const trimmed = raw.trim();
-    if (!trimmed || trimmed.startsWith("#"))
-      continue;
-    if (unsupportedPattern(trimmed)) {
-      loaded.unsupportedPatterns += 1;
-      diagnostics.push({
-        severity: "warning",
-        code: "unsupported_ignore_pattern",
-        message: "ignore pattern is not supported and was skipped",
-        path: sourcePath,
-        line: index + 1,
-        skipped: true,
-        details: { pattern: trimmed }
-      });
-      continue;
-    }
-    const anchored = trimmed.startsWith("/");
-    const directoryOnly = trimmed.endsWith("/");
-    const pattern = trimmed.replace(/^\/+/, "").replace(/\/+$/, "");
-    if (!pattern)
-      continue;
-    loaded.patterns += 1;
-    rules.push({ sourcePath, baseDirectory, pattern, directoryOnly, anchored, hasSlash: pattern.includes("/") });
-  }
-  return rules;
-}
-function unsupportedPattern(pattern) {
-  return pattern.startsWith("!") || pattern.startsWith("\\#") || pattern.startsWith("\\!") || /[\[\]{}]/.test(pattern);
-}
-function ruleMatches(rule, relativePath, isDirectory) {
-  if (rule.directoryOnly && !isDirectory)
-    return false;
-  const relativeToBase = relativeFromBase(rule.baseDirectory, relativePath);
-  if (relativeToBase === null || relativeToBase === "")
-    return false;
-  if (!rule.hasSlash && !rule.anchored)
-    return globMatch(path.posix.basename(relativeToBase), rule.pattern);
-  return pathGlobMatch(relativeToBase, rule.pattern);
-}
-function relativeFromBase(baseDirectory, relativePath) {
-  if (baseDirectory === ".")
-    return relativePath;
-  if (relativePath === baseDirectory)
-    return "";
-  const prefix = `${baseDirectory}/`;
-  return relativePath.startsWith(prefix) ? relativePath.slice(prefix.length) : null;
-}
-function isNodeError(error) {
-  return error instanceof Error && "code" in error;
-}
-
-// dist/match-text.js
-function findMatches(text, query) {
-  if (query.type === "literal") {
-    const hits2 = [];
-    let from = 0;
-    while (from <= text.length) {
-      const index = text.indexOf(query.text, from);
-      if (index === -1)
-        break;
-      hits2.push({ index, text: query.text });
-      from = index + Math.max(query.text.length, 1);
-    }
-    return hits2;
-  }
-  const regex = new RegExp(query.text, "g");
-  const hits = [];
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    hits.push({ index: match.index, text: match[0] });
-    if (match[0].length === 0)
-      regex.lastIndex += 1;
-  }
-  return hits;
-}
-function chooseRepresentativeMatch(matches) {
-  return matches.find((match) => match.text.length > 0) ?? matches[0] ?? null;
-}
-function makeSnippet(line, matchIndex, matchLength, maxLineLength) {
-  if (line.length <= maxLineLength)
-    return { text: line, trimmed: false };
-  const matchEnd = matchIndex + matchLength;
-  let start = Math.max(0, Math.floor((matchIndex + matchEnd - maxLineLength) / 2));
-  if (start + maxLineLength > line.length)
-    start = Math.max(0, line.length - maxLineLength);
-  return { text: line.slice(start, start + maxLineLength), trimmed: true, ...start > 0 ? { textStartColumn: start + 1 } : {} };
-}
-function splitLines(text) {
-  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-}
-
-// dist/path-security.js
-import path2 from "node:path";
-function isPathInsideOrSame(candidate, base) {
-  const relative = path2.relative(base, candidate);
-  return relative === "" || !relative.startsWith("..") && !path2.isAbsolute(relative);
-}
-
 // dist/search-results.js
 function addFileHit(state, file, hit) {
   if (state.summary.matches >= state.request.output.maxMatches) {
-    markTruncated(state, "max_matches", "search stopped because maxMatches was reached", { maxMatches: state.request.output.maxMatches });
+    markTruncated2(state, "max_matches", "search stopped because maxMatches was reached", { maxMatches: state.request.output.maxMatches });
     state.globalLimitReached = true;
     return;
   }
@@ -4798,7 +5073,7 @@ function addFileHit(state, file, hit) {
         snippet.textStartColumn = hit.textStartColumn;
       summary.snippets.push(snippet);
     } else {
-      markTruncated(state, "max_snippets_per_file", "snippets were omitted because maxSnippetsPerFile was reached", { file, maxSnippetsPerFile: state.request.output.maxSnippetsPerFile });
+      markTruncated2(state, "max_snippets_per_file", "snippets were omitted because maxSnippetsPerFile was reached", { file, maxSnippetsPerFile: state.request.output.maxSnippetsPerFile });
     }
     summary.encoding = hit.encoding;
     summary.encodingRule = hit.encodingRule;
@@ -4807,7 +5082,7 @@ function addFileHit(state, file, hit) {
 }
 function addDirectoryHit(state, directoryPath, hit) {
   if (state.summary.matches >= state.request.output.maxMatches) {
-    markTruncated(state, "max_matches", "search stopped because maxMatches was reached", { maxMatches: state.request.output.maxMatches });
+    markTruncated2(state, "max_matches", "search stopped because maxMatches was reached", { maxMatches: state.request.output.maxMatches });
     state.globalLimitReached = true;
     return;
   }
@@ -4825,7 +5100,7 @@ function addDirectoryHit(state, directoryPath, hit) {
   summary.matchCount += 1;
   state.summariesByDirectory.set(directoryPath, summary);
 }
-function markTruncated(state, reason, message, details) {
+function markTruncated2(state, reason, message, details) {
   if (!state.summary.truncated) {
     state.summary.truncated = true;
     state.summary.truncatedReason = reason;
@@ -4840,7 +5115,35 @@ function buildDetailMatches(state) {
   return [...state.detailsByDirectory.entries(), ...state.detailsByFile.entries()].sort(([a], [b]) => compareStrings(a, b)).flatMap(([, hits]) => hits.sort((a, b) => typeRank(a.type) - typeRank(b.type) || (a.type === "content" ? a.line : 0) - (b.type === "content" ? b.line : 0) || (a.type === "content" ? a.column : 0) - (b.type === "content" ? b.column : 0)));
 }
 function buildSummaryMatches(state) {
-  return [...state.summariesByDirectory.values(), ...state.summariesByFile.values()].sort((a, b) => compareStrings(summaryPath(a), summaryPath(b))).map((item) => item.type === "file" ? { ...item, lines: item.lines.sort((a, b) => a - b) } : item);
+  return sortSummaryMatches([...state.summariesByDirectory.values(), ...state.summariesByFile.values()], state.request.output.sort).map((item) => item.type === "file" ? { ...item, lines: item.lines.sort((a, b) => a - b) } : item);
+}
+function buildAgentMatches(state) {
+  return buildSummaryMatches(state).map((item) => {
+    if (item.type === "directory") {
+      return {
+        type: "agentDirectory",
+        path: item.path,
+        targetKind: "directory",
+        matchTypes: item.matchTypes,
+        matchCount: item.matchCount,
+        ...item.relevance ? { relevance: item.relevance } : {}
+      };
+    }
+    const lines = item.lines.sort((a, b) => a - b);
+    return {
+      type: "agentFile",
+      file: item.file,
+      targetKind: "file",
+      matchTypes: item.matchTypes,
+      matchCount: item.matchCount,
+      lines,
+      representativeSnippets: item.snippets,
+      readRanges: readRanges(lines),
+      ...item.relevance ? { relevance: item.relevance } : {},
+      ...item.encoding ? { encoding: item.encoding } : {},
+      ...item.encodingRule ? { encodingRule: item.encodingRule } : {}
+    };
+  });
 }
 function typeRank(type) {
   if (type === "directory")
@@ -4851,6 +5154,69 @@ function typeRank(type) {
 }
 function summaryPath(item) {
   return item.type === "file" ? item.file : item.path;
+}
+function sortSummaryMatches(items, sort) {
+  if (sort === "path")
+    return items.sort((a, b) => compareStrings(summaryPath(a), summaryPath(b)));
+  return items.map((item) => ({ item: withRelevance(item), relevance: relevanceFor(item) })).sort((a, b) => b.relevance.score - a.relevance.score || compareStrings(summaryPath(a.item), summaryPath(b.item))).map(({ item }) => item);
+}
+function withRelevance(item) {
+  const relevance = relevanceFor(item);
+  return { ...item, relevance };
+}
+function relevanceFor(item) {
+  const candidatePath = summaryPath(item);
+  const lowerPath = candidatePath.toLowerCase();
+  const basename = lowerPath.split("/").at(-1) ?? lowerPath;
+  const reasons = [];
+  let score = 0;
+  if (item.type === "file") {
+    if (item.filepathMatched) {
+      score += 40;
+      reasons.push("filepath-match");
+    }
+    if (item.contentMatched) {
+      score += 20;
+      reasons.push("content-match");
+    }
+  } else {
+    score += 15;
+    reasons.push("directory-match");
+  }
+  const matchCountScore = Math.min(30, item.matchCount * 3);
+  score += matchCountScore;
+  reasons.push(`match-count:${item.matchCount}`);
+  if (basename === "readme.md" || basename.startsWith("readme.")) {
+    score += 30;
+    reasons.push("readme");
+  }
+  if (lowerPath === "docs" || lowerPath.startsWith("docs/") || lowerPath.includes("/docs/")) {
+    score += 20;
+    reasons.push("docs-path");
+  }
+  if (lowerPath === "src" || lowerPath.startsWith("src/") || lowerPath.includes("/src/")) {
+    score += 15;
+    reasons.push("src-path");
+  }
+  if (lowerPath === "test" || lowerPath === "tests" || lowerPath.startsWith("test/") || lowerPath.startsWith("tests/") || lowerPath.includes("/test/") || lowerPath.includes("/tests/")) {
+    score += 10;
+    reasons.push("test-path");
+  }
+  if (isLowPriorityPath(lowerPath)) {
+    score -= 40;
+    reasons.push("generated-or-vendor-path");
+  }
+  return { score, reasons };
+}
+function isLowPriorityPath(lowerPath) {
+  return /(^|\/)(generated|vendor|node_modules|dist|build|target|coverage)(\/|$)/.test(lowerPath);
+}
+function readRanges(lines) {
+  return lines.slice(0, 3).map((line) => ({
+    startLine: Math.max(1, line - 5),
+    endLine: line + 5,
+    reason: "match"
+  }));
 }
 
 // dist/search.js
@@ -4868,30 +5234,30 @@ async function runSearch(request, rootPath, diagnostics) {
     directoriesVisited: 0,
     globalLimitReached: false
   };
-  await traverse(searchState, rootPath, "", 0, []);
-  const matches = request.output.mode === "detail" ? buildDetailMatches(searchState) : buildSummaryMatches(searchState);
+  await traverse2(searchState, rootPath, "", 0, []);
+  const matches = request.output.mode === "detail" ? buildDetailMatches(searchState) : request.output.mode === "agent" ? buildAgentMatches(searchState) : buildSummaryMatches(searchState);
   searchState.summary.filesMatched = searchState.summariesByFile.size;
   searchState.summary.directoriesMatched = searchState.summariesByDirectory.size;
   searchState.summary.diagnostics = diagnostics.length;
   return { matches, summary: searchState.summary };
 }
-async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreRules) {
+async function traverse2(state, absoluteDir, relativeDir, depth, inheritedIgnoreRules) {
   if (state.globalLimitReached)
     return;
   if (state.directoriesVisited >= state.request.search.maxDirectoriesVisited) {
-    markTruncated(state, "max_directories_visited", "search stopped because maxDirectoriesVisited was reached", { maxDirectoriesVisited: state.request.search.maxDirectoriesVisited });
+    markTruncated2(state, "max_directories_visited", "search stopped because maxDirectoriesVisited was reached", { maxDirectoriesVisited: state.request.search.maxDirectoriesVisited });
     state.globalLimitReached = true;
     return;
   }
   state.directoriesVisited += 1;
   if (!relativeDir)
     state.summary.directoriesVisited += 1;
-  const safeDir = await resolveInsideRoot(state, absoluteDir, relativeDir || ".");
+  const safeDir = await resolveInsideRoot2(state, absoluteDir, relativeDir || ".");
   if (!safeDir)
     return;
   let entries;
   try {
-    entries = await fs2.readdir(safeDir, { withFileTypes: true });
+    entries = await fs3.readdir(safeDir, { withFileTypes: true });
   } catch {
     state.diagnostics.push({ severity: "warning", code: "directory_not_readable", message: "directory could not be read and was skipped", path: relativeDir || ".", skipped: true });
     return;
@@ -4902,7 +5268,7 @@ async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreR
     if (state.globalLimitReached)
       return;
     const relativePath = relativeDir ? `${relativeDir}/${entry.name}` : entry.name;
-    const absolutePath = path3.join(safeDir, entry.name);
+    const absolutePath = path4.join(safeDir, entry.name);
     if (entry.isSymbolicLink()) {
       state.diagnostics.push({ severity: "info", code: "symlink_skipped", message: "symlink was skipped", path: relativePath, skipped: true });
       continue;
@@ -4917,20 +5283,20 @@ async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreR
       state.summary.directoriesVisited += 1;
       if (hasTarget(state, "directory")) {
         state.summary.directoriesScanned += 1;
-        const hit = chooseRepresentativeMatch(findMatches(relativePath, state.request.query));
+        const hit = chooseRepresentativeMatch(findMatches(relativePath, requireQuery(state)));
         if (hit) {
           addDirectoryHit(state, relativePath, { type: "directory", path: relativePath, matchedText: hit.text });
         }
       }
       if (!state.request.search.recursive || depth >= state.request.search.maxDepth)
         continue;
-      await traverse(state, absolutePath, relativePath, depth + 1, ignoreRules);
+      await traverse2(state, absolutePath, relativePath, depth + 1, ignoreRules);
       continue;
     }
     if (!entry.isFile())
       continue;
     if (state.summary.filesVisited >= state.request.search.maxFilesVisited) {
-      markTruncated(state, "max_files_visited", "search stopped because maxFilesVisited was reached", { maxFilesVisited: state.request.search.maxFilesVisited });
+      markTruncated2(state, "max_files_visited", "search stopped because maxFilesVisited was reached", { maxFilesVisited: state.request.search.maxFilesVisited });
       state.globalLimitReached = true;
       return;
     }
@@ -4939,12 +5305,12 @@ async function traverse(state, absoluteDir, relativeDir, depth, inheritedIgnoreR
       state.summary.filesIgnored += 1;
       continue;
     }
-    if (!candidateFile(state, entry.name))
+    if (!candidateFile2(state, entry.name))
       continue;
     await searchFile(state, absolutePath, relativePath, entry.name);
   }
 }
-function candidateFile(state, basename) {
+function candidateFile2(state, basename) {
   const { includeFileNamePatterns, excludeFileNamePatterns } = state.request.search;
   if (includeFileNamePatterns.length > 0 && !matchesAny(basename, includeFileNamePatterns))
     return false;
@@ -4957,24 +5323,24 @@ async function searchFile(state, absolutePath, relativePath, basename) {
   if (searchFilepath) {
     countedScanned = true;
     state.summary.filesScanned += 1;
-    const hit = chooseRepresentativeMatch(findMatches(relativePath, state.request.query));
+    const hit = chooseRepresentativeMatch(findMatches(relativePath, requireQuery(state)));
     if (hit) {
       addFileHit(state, relativePath, { type: "filepath", file: relativePath, matchedText: hit.text });
     }
   }
   if (!searchContent)
     return;
-  const safePath = await resolveInsideRoot(state, absolutePath, relativePath);
+  const safePath = await resolveInsideRoot2(state, absolutePath, relativePath);
   if (!safePath)
     return;
   let stat;
   try {
-    const lstat = await fs2.lstat(safePath);
+    const lstat = await fs3.lstat(safePath);
     if (lstat.isSymbolicLink()) {
       state.diagnostics.push({ severity: "info", code: "symlink_skipped", message: "symlink was skipped", path: relativePath, skipped: true });
       return;
     }
-    stat = await fs2.stat(safePath);
+    stat = await fs3.stat(safePath);
   } catch {
     state.diagnostics.push({ severity: "warning", code: "file_not_readable", message: "file could not be read and was skipped", file: relativePath, skipped: true });
     return;
@@ -4985,7 +5351,7 @@ async function searchFile(state, absolutePath, relativePath, basename) {
   }
   let bytes;
   try {
-    bytes = await fs2.readFile(safePath);
+    bytes = await fs3.readFile(safePath);
   } catch {
     state.diagnostics.push({ severity: "warning", code: "file_not_readable", message: "file could not be read and was skipped", file: relativePath, skipped: true });
     return;
@@ -5014,9 +5380,9 @@ async function searchFile(state, absolutePath, relativePath, basename) {
       markLineSkipped(state, relativePath, index + 1, line.length);
       continue;
     }
-    for (const match of findMatches(line, state.request.query)) {
+    for (const match of findMatches(line, requireQuery(state))) {
       if (fileHitCount >= state.request.output.maxMatchesPerFile) {
-        markTruncated(state, "max_matches_per_file", "file search stopped because maxMatchesPerFile was reached", { file: relativePath, maxMatchesPerFile: state.request.output.maxMatchesPerFile });
+        markTruncated2(state, "max_matches_per_file", "file search stopped because maxMatchesPerFile was reached", { file: relativePath, maxMatchesPerFile: state.request.output.maxMatchesPerFile });
         return;
       }
       const snippet = makeSnippet(line, match.index, match.text.length, state.request.output.maxLineLength);
@@ -5060,10 +5426,10 @@ function markLineSkipped(state, file, line, lineChars) {
     details: { lineChars, maxLineChars: state.request.search.maxLineChars }
   });
 }
-async function resolveInsideRoot(state, absolutePath, relativePath) {
+async function resolveInsideRoot2(state, absolutePath, relativePath) {
   let realPath;
   try {
-    realPath = await fs2.realpath(absolutePath);
+    realPath = await fs3.realpath(absolutePath);
   } catch {
     state.diagnostics.push({ severity: "warning", code: "file_not_readable", message: "path could not be resolved and was skipped", path: relativePath, skipped: true });
     return null;
@@ -5076,6 +5442,11 @@ async function resolveInsideRoot(state, absolutePath, relativePath) {
 }
 function hasTarget(state, target) {
   return state.request.search.targets.includes(target);
+}
+function requireQuery(state) {
+  if (!state.request.query)
+    throw new Error("search mode requires query");
+  return state.request.query;
 }
 
 // dist/main.js
@@ -5130,36 +5501,70 @@ async function runRequest(request) {
     return finish(false, validation.code, validation.message, validation.effectiveRequest ?? {}, [], baseSummary, diagnostics);
   }
   const effectiveRequest = validation.effectiveRequest;
-  const rootPath = path4.resolve(process.cwd(), effectiveRequest.root);
+  const requestedRootPath = path5.resolve(process.cwd(), effectiveRequest.root);
+  const rootPath = effectiveRequest.detectGitRoot ? await detectGitRootPath(requestedRootPath) : requestedRootPath;
+  if (effectiveRequest.detectGitRoot)
+    effectiveRequest.root = displayRoot(rootPath);
   const rootCheck = await checkRoot(rootPath, effectiveRequest.root);
   if (!rootCheck.ok) {
     diagnostics.push(rootCheck.diagnostic);
     return finish(false, rootCheck.diagnostic.code, rootCheck.diagnostic.message, effectiveRequest, [], baseSummary, diagnostics);
   }
+  if (effectiveRequest.mode === "listFiles") {
+    const listResult = await runListFiles(effectiveRequest, rootCheck.realPath, diagnostics);
+    return finish(true, null, null, effectiveRequest, [], listResult.summary, diagnostics, { files: listResult.files, fileSummary: listResult.fileSummary });
+  }
   const searchResult = await runSearch(effectiveRequest, rootCheck.realPath, diagnostics);
-  return finish(true, null, null, effectiveRequest, searchResult.matches, searchResult.summary, diagnostics);
+  const readfileHints = effectiveRequest.output.includeReadfileRequestHints ? buildReadfileHints(effectiveRequest.root, searchResult.matches) : void 0;
+  return finish(true, null, null, effectiveRequest, searchResult.matches, searchResult.summary, diagnostics, { readfileHints });
 }
 async function checkRoot(rootPath, requestRoot) {
-  if (path4.parse(rootPath).root === rootPath || rootPath === homeDirectory()) {
+  if (path5.parse(rootPath).root === rootPath || rootPath === homeDirectory()) {
     return rootError("root_too_broad", "root is too broad", requestRoot);
   }
   try {
-    const stat = await fs3.stat(rootPath);
+    const stat = await fs4.stat(rootPath);
     if (!stat.isDirectory())
       return rootError("root_not_accessible", "root is not a directory", requestRoot);
-    await fs3.access(rootPath, fsConstants.R_OK);
-    const realPath = await fs3.realpath(rootPath);
+    await fs4.access(rootPath, fsConstants.R_OK);
+    const realPath = await fs4.realpath(rootPath);
     return { ok: true, realPath };
   } catch (error) {
     const code = isNodeError2(error) && error.code === "ENOENT" ? "root_not_found" : "root_not_accessible";
     return rootError(code, code === "root_not_found" ? "root does not exist" : "root is not accessible", requestRoot);
   }
 }
+async function detectGitRootPath(startPath) {
+  let current = startPath;
+  try {
+    const stat = await fs4.stat(current);
+    if (!stat.isDirectory())
+      current = path5.dirname(current);
+  } catch {
+    return startPath;
+  }
+  while (true) {
+    try {
+      const gitStat = await fs4.stat(path5.join(current, ".git"));
+      if (gitStat.isDirectory() || gitStat.isFile())
+        return current;
+    } catch {
+    }
+    const parent = path5.dirname(current);
+    if (parent === current)
+      return startPath;
+    current = parent;
+  }
+}
+function displayRoot(rootPath) {
+  const relative = path5.relative(process.cwd(), rootPath) || ".";
+  return relative.split(path5.sep).join("/");
+}
 function rootError(code, message, pathValue) {
   return { ok: false, diagnostic: { severity: "error", code, message, path: pathValue } };
 }
 function homeDirectory() {
-  return process.env.HOME ? path4.resolve(process.env.HOME) : "";
+  return process.env.HOME ? path5.resolve(process.env.HOME) : "";
 }
 async function readStdin(stdin) {
   const chunks = [];
@@ -5168,11 +5573,11 @@ async function readStdin(stdin) {
   return Buffer.concat(chunks).toString("utf8");
 }
 async function packageVersion() {
-  const bundledVersion = "0.8.4";
+  const bundledVersion = "0.9.0";
   if (bundledVersion)
     return bundledVersion;
   try {
-    const pkg = JSON.parse(await fs3.readFile(new URL("../package.json", import.meta.url), "utf8"));
+    const pkg = JSON.parse(await fs4.readFile(new URL("../package.json", import.meta.url), "utf8"));
     return pkg.version ?? "0.0.0";
   } catch {
     return "0.0.0";
@@ -5180,6 +5585,22 @@ async function packageVersion() {
 }
 function isNodeError2(error) {
   return error instanceof Error && "code" in error;
+}
+function buildReadfileHints(root, matches) {
+  const files = /* @__PURE__ */ new Set();
+  for (const match of matches) {
+    if (match.type === "content" || match.type === "filepath" || match.type === "file" || match.type === "agentFile") {
+      files.add(match.file);
+    }
+  }
+  return [...files].sort().map((file) => ({
+    file,
+    request: {
+      version: 1,
+      root,
+      files: [{ path: file }]
+    }
+  }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && !globalThis.__MIKU_GREP_BUNDLE_ENTRY__) {
   process.exitCode = await main();

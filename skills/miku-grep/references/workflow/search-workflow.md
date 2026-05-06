@@ -24,17 +24,36 @@ Minimum request:
 }
 ```
 
+File inventory request:
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "mode": "listFiles",
+  "query": { "type": "glob", "text": "**/*.md" }
+}
+```
+
 ## Preferred Behavior
 
 - Use `summary` for broad repository context.
+- Use `agent` when the next step is selecting files or directories for reading.
 - Use `detail` when the user needs exact lines and columns.
+- Use `mode: "listFiles"` for file inventory; read top-level `files[]` and `fileSummary` instead of `matches[]`.
 - Keep `maxMatches`, `maxMatchesPerFile`, and `maxDepth` bounded for agent workflows.
 - Prefer the narrowest practical `root`.
+- Use `detectGitRoot: true` when the user asks for repository-wide search from a subdirectory.
 - If `.mikusoft/miku-grep.json` exists under the selected request root, use it only for repo-local defaults for `search`, `output`, `encoding`, and `ignore`. Explicit request JSON values always win.
 - If the requested `root` is outside the current repository or declared workspace, ask for explicit user confirmation before running the search. The confirmation should show the requested `root`, target, query type, and practical limits such as `maxDepth`, `includeFileNamePatterns`, and `maxMatches`.
 - Use `includeFileNamePatterns` when the user has named file types.
 - Treat `excludeFileNamePatterns` and `excludeDirNamePatterns` as replacement values for the corresponding default exclude presets. Omit them to keep defaults; use an empty array to disable that exclude category for the request.
 - Use `filepath` and `directory` targets for path discovery before switching to content search.
+- Use `query.type: "glob"` only for root-relative path search. In `search` mode, combine it with `filepath` or `directory`, not `content`.
+- Use `output.sort: "relevance"` only as deterministic heuristic ordering, not semantic ranking.
+- Use `output.includeReadfileRequestHints: true` when the next workflow is `miku-readfile`.
+- Use `output.contextLines`, `contextLinesBefore`, or `contextLinesAfter` only with `detail` content searches.
+- Use `encoding.preset: "japanese-legacy"` when common Japanese legacy text patterns should be treated as Shift_JIS; it is not auto detection.
 - Report `summary.truncated` and diagnostics concisely.
 
 ## Java-Only Flow
@@ -74,6 +93,23 @@ Minimal Java-only request:
 }
 ```
 
+Agent candidate request:
+
+```json
+{
+  "version": 1,
+  "root": ".",
+  "query": { "type": "literal", "text": "RepositoryMap" },
+  "search": { "targets": ["filepath", "content"], "recursive": true, "maxDepth": 8 },
+  "output": {
+    "mode": "agent",
+    "sort": "relevance",
+    "includeReadfileRequestHints": true,
+    "maxMatches": 50
+  }
+}
+```
+
 ## Result Handling
 
 Before answering, check:
@@ -86,6 +122,8 @@ Before answering, check:
 - `summary.truncated`
 - `summary.truncatedReason`
 - `diagnostics`
+- `files[]` and `fileSummary` when `effectiveRequest.mode` is `listFiles`
+- `readfileHints[]` when `output.includeReadfileRequestHints` is true
 
 If `ok` is false, treat the runtime result as a hard operation failure and report the error code and message.
 If `ok` is true but diagnostics or truncation are present, report the result and include a concise warning summary.
