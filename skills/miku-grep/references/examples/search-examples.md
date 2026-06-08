@@ -1,5 +1,18 @@
 # Search Examples
 
+## Args-First Search
+
+```bash
+miku-grep TODO .
+miku-grep TODO . --files
+miku-grep TODO . --agent
+miku-grep TODO . --context 2
+miku-grep TODO . --format json
+```
+
+Use args-first commands for quick exploration. Use request JSON when the search
+needs a reusable structured artifact or handoff.
+
 ## Content Search
 
 ```json

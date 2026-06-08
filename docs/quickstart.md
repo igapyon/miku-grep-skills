@@ -17,7 +17,7 @@ The default policy is `cli-preferred`.
 
 - `cli-only`: use the bundled CLI runtime only
 - `cli-preferred`: use the bundled CLI runtime first, then visible handoff if CLI is unavailable
-- `handoff-only`: do not execute CLI; return request JSON guidance or steps
+- `handoff-only`: do not execute CLI; return args-first commands, request JSON guidance, or steps
 
 MCP server integration is intentionally out of scope for this repository.
 
@@ -57,9 +57,21 @@ When `search.excludeFileNamePatterns` or `search.excludeDirNamePatterns` is omit
 When either field is specified, that request value replaces the corresponding default preset.
 An empty array such as `excludeFileNamePatterns: []` means no file-name excludes for that request.
 
-## Current Request Features
+## Current CLI Features
 
-The bundled `0.9.x` runtimes support these agent-oriented fields:
+The bundled `0.10.x` runtimes support args-first search and these
+agent-oriented fields:
+
+```bash
+miku-grep TODO .
+miku-grep TODO . --files
+miku-grep TODO . --agent
+miku-grep TODO . --context 2
+miku-grep TODO . --format json
+miku-grep --files .
+```
+
+Structured request JSON supports:
 
 - `search.targets`: `content`, `filepath`, and `directory`
 - `mode: "search"` for grep-like search and `mode: "listFiles"` for file inventory
@@ -89,7 +101,26 @@ Precedence is:
 Do not put `root` or `query` in repo-local config. See
 [miku-grep-skills-config.md](miku-grep-skills-config.md).
 
-## Example Request
+## Example Commands
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --context 2
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+```
+
+Node.js runtime equivalent:
+
+```bash
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO .
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
+```
+
+## Example Request JSON
+
+Use request JSON for complex, reusable, or visible handoff searches.
 
 ```json
 {
@@ -133,7 +164,7 @@ Use `listFiles` for agent-readable file inventory:
 }
 ```
 
-For direct CLI use:
+For direct structured CLI use:
 
 ```bash
 java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json

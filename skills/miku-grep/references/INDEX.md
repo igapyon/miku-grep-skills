@@ -5,7 +5,8 @@ Use this index when you need detailed guidance beyond the core rules in `SKILL.m
 ## Workflow
 
 - [workflow/search-workflow.md](workflow/search-workflow.md)
-  - request construction
+  - args-first search
+  - request construction for structured handoff
   - file inventory requests
   - agent candidate output
   - result handling

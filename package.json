@@ -1,6 +1,6 @@
 {
   "name": "miku-grep-skills",
-  "version": "0.9.0.2",
+  "version": "0.10.0",
   "private": true,
   "description": "Agent Skills for miku-grep",
   "license": "Apache-2.0",

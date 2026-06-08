@@ -6,7 +6,8 @@ description: Use only when the user explicitly says `miku-grep` for miku-grep-sp
 # Miku Grep
 
 Use this skill for `miku-grep`-specific structured local search workflows.
-Keep the focus on local JSON-in / JSON-out grep operations for agents and automation.
+Prefer the short args-first CLI for quick exploration. Use JSON output or
+request JSON only when the workflow needs a stable structured artifact.
 
 For this skill, `miku-grep` is opt-in by default.
 Do not trigger it from generic words such as search, grep, find, scan, file investigation, code reading, or review.
@@ -31,11 +32,12 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 ## Core Rules
 
 - prefer the bundled runtime artifacts in `runtime/`
-- keep request and result data as structured JSON files or internal JSON objects
-- use `summary` output for broad agent context
-- use `agent` output when the next step is choosing files or directories to read
-- use `detail` output only for focused inspection
-- use `mode: "listFiles"` when the task is file inventory rather than grep
+- use args-first commands such as `miku-grep TODO .` for first-pass searches
+- use `--agent` when the next step is choosing files or directories to read
+- use `--files` when the task is file inventory or matching-file discovery
+- use `--context N` for focused inspection around content hits
+- use `--format json` when the result must be parsed or passed to another tool
+- use stdin request JSON for complex, reusable, or visible handoff searches
 - keep `root`, `maxDepth`, `maxMatches`, and include patterns narrow enough for the user's actual question
 - if `.mikusoft/miku-grep.json` exists under the selected request root, apply it only as repo-local defaults for `search`, `output`, `encoding`, and `ignore`; explicit request JSON always takes precedence
 - before searching outside the current repository or declared workspace, ask for explicit user confirmation and include the requested `root`, target, query type, and practical limits such as `maxDepth`, `include`, and `maxMatches`
@@ -43,12 +45,60 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 - keep diagnostics visible when the runtime reports warnings or expected failures
 - do not reimplement grep/search logic in the skill layer
 
+## Agent Decision Path
+
+When this skill is active, choose the lightest command that answers the next
+agent step:
+
+1. For a first search, run args-first text output:
+
+   ```bash
+   miku-grep TODO .
+   ```
+
+2. To choose what to read next, use `--agent`:
+
+   ```bash
+   miku-grep RepositoryMap . --agent
+   ```
+
+3. To get only matching files or an inventory, use `--files`:
+
+   ```bash
+   miku-grep TODO . --files
+   miku-grep --files .
+   ```
+
+4. To parse the result or hand it to another tool, make JSON explicit:
+
+   ```bash
+   miku-grep TODO . --format json
+   ```
+
+5. Build stdin request JSON only for complex, reusable, or visible handoff
+   searches that are awkward as short CLI arguments.
+
+Do not start with request JSON only because JSON is available. The default
+agent path is args-first, text-readable, and then JSON only when needed.
+
 ## Operations
 
 Primary operation:
 
-- `search`: run a `miku-grep` JSON request and return structured result JSON
-- `listFiles`: run a `mode: "listFiles"` inventory request and return `files[]` / `fileSummary`
+- `search`: run `miku-grep QUERY [ROOT]` and return readable text by default
+- `jsonSearch`: run `miku-grep QUERY [ROOT] --format json` or stdin request JSON and return structured result JSON
+- `listFiles`: run `--files` or `mode: "listFiles"` inventory and return matching files or `files[]` / `fileSummary`
+
+Common args-first examples:
+
+```bash
+miku-grep TODO .
+miku-grep TODO . --files
+miku-grep TODO . --agent
+miku-grep TODO . --context 2
+miku-grep TODO . --encoding shift_jis
+miku-grep TODO . --format json
+```
 
 Common search targets:
 
@@ -105,6 +155,9 @@ If the active environment has Java but does not have Node.js, use the Java jar
 directly:
 
 ```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
 java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
@@ -118,11 +171,12 @@ explicitly:
 
 1. read [references/workflow/search-workflow.md](references/workflow/search-workflow.md)
 2. check whether the target repository has `.mikusoft/miku-grep.json`
-3. prepare `request.json` with explicit `version`, `root`, `query`, `search`,
-   and `output`
-4. copy repo-local config values into `request.json` when needed
-5. run the Java jar directly
-6. inspect `result.json` and report truncation or diagnostics without hiding
+3. use args-first Java commands for quick searches
+4. prepare `request.json` with explicit `version`, `root`, `query`, `search`,
+   and `output` when a reusable structured request is needed
+5. copy repo-local config values into `request.json` when needed
+6. run the Java jar directly
+7. inspect JSON results and report truncation or diagnostics without hiding
    runtime messages
 
 ## Error Handling

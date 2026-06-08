@@ -38,7 +38,7 @@ test("documents consistently use the expected runtime artifact names", () => {
 });
 
 test("operation and artifact role vocabulary is stable across docs", () => {
-  for (const operation of ["search", "version", "help"]) {
+  for (const operation of ["search", "jsonSearch", "version", "help"]) {
     assert.match(docs.operationsMap, new RegExp(`\`${operation}\``));
   }
 
@@ -65,6 +65,20 @@ test("documents keep Java-only direct runtime operation explicit", () => {
   assert.match(docs.skill, /lib\/\*\.mjs/);
   assert.match(docs.operationsMap, /helper is optional/i);
   assert.match(docs.workflow, /authoritative artifact/i);
+});
+
+test("documents v0.10 args-first search and explicit JSON output", () => {
+  for (const [name, text] of Object.entries({
+    readme: docs.readme,
+    skill: docs.skill,
+    quickstart: docs.quickstart,
+    operationsMap: docs.operationsMap,
+    workflow: docs.workflow
+  })) {
+    assert.match(text, /TODO \./, `${name} should show args-first search`);
+    assert.match(text, /--agent/, `${name} should show agent search`);
+    assert.match(text, /--format json/, `${name} should show explicit JSON output`);
+  }
 });
 
 test("documents repo-local miku-grep config contract", () => {

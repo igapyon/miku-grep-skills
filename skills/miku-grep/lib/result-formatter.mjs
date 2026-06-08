@@ -63,9 +63,39 @@ function formatMatch(match, { maxSnippetsPerFile }) {
     return `- ${match.path ?? "(unknown directory)"} (directory match)`;
   }
 
+  if (match?.type === "agentDirectory") {
+    return `- ${match.path ?? "(unknown directory)"} (agent directory candidate)`;
+  }
+
   if (match?.type === "content") {
     const location = match.line ? `:${match.line}` : "";
     return `- ${match.file}${location}: ${trimSnippet(match.text)}`;
+  }
+
+  if (match?.type === "agentFile") {
+    const parts = [`- ${match.file ?? "(unknown file)"}`];
+    if (typeof match.matchCount === "number") {
+      parts.push(`${match.matchCount} matches`);
+    }
+    if (Array.isArray(match.readRanges) && match.readRanges.length > 0) {
+      const ranges = match.readRanges
+        .slice(0, 3)
+        .map((range) => `${range.startLine}-${range.endLine}`)
+        .join(", ");
+      parts.push(`read ${ranges}`);
+    }
+
+    const snippets = Array.isArray(match.representativeSnippets)
+      ? match.representativeSnippets
+      : [];
+    const snippetText = snippets
+      .slice(0, maxSnippetsPerFile)
+      .map((snippet) => {
+        const line = snippet.line ? `:${snippet.line}` : "";
+        return `    ${match.file}${line}: ${trimSnippet(snippet.text)}`;
+      });
+
+    return [parts.join(" - "), ...snippetText].join("\n");
   }
 
   const parts = [`- ${match?.file ?? "(unknown file)"}`];

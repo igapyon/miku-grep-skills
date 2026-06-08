@@ -25,6 +25,40 @@ test("Node.js runtime starts and prints miku-grep version", () => {
   assert.match(output, /^miku-grep\s+\d+\.\d+\.\d+/);
 });
 
+test("Java runtime executes args-first text search", () => {
+  const javaRuntimePath = path.resolve(resolveRuntimeArtifactPath({ kind: "java" }));
+  const tempRoot = createSearchFixture();
+  try {
+    const output = execFileSync("java", ["-jar", javaRuntimePath, "needle", ".", "--limit", "5"], {
+      cwd: tempRoot,
+      encoding: "utf8"
+    });
+
+    assert.match(output, /matches: 1/);
+    assert.match(output, /src\/app\.txt/);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("Node.js runtime executes args-first JSON search", () => {
+  const nodeRuntimePath = path.resolve(resolveRuntimeArtifactPath({ kind: "node" }));
+  const tempRoot = createSearchFixture();
+  try {
+    const output = execFileSync("node", [nodeRuntimePath, "needle", ".", "--format", "json"], {
+      cwd: tempRoot,
+      encoding: "utf8"
+    });
+    const result = JSON.parse(output);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.summary.filesMatched, 1);
+    assert.equal(result.matches[0].file, "src/app.txt");
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("Java runtime executes a structured content search", () => {
   const javaRuntimePath = path.resolve(resolveRuntimeArtifactPath({ kind: "java" }));
   const tempRoot = createSearchFixture();

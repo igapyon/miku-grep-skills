@@ -2,7 +2,10 @@
 
 `miku-grep-skills` is an Agent Skills package for using `miku-grep` from agent workflows.
 
-`miku-grep` is a local-first structured grep runtime for AI agents and automation. It accepts JSON requests through stdin and returns structured JSON results through stdout.
+`miku-grep` is a local-first grep-like runtime for AI agents and automation.
+It accepts short `miku-grep QUERY [ROOT]` arguments and returns readable text by
+default. Use `--format json` or stdin request JSON when a structured result is
+needed.
 
 ## Access Scope
 
@@ -25,8 +28,10 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 Typical requests:
 
 - search file contents with a literal query
+- list matching files with `--files`
 - search file paths with a regex query
-- return file-level summaries for agent context
+- return next-read candidates with `--agent`
+- return structured JSON with `--format json`
 - return detailed matches for focused inspection
 
 ## Notes
@@ -34,7 +39,7 @@ Typical requests:
 - This repository does not provide MCP server integration.
 - The skill is opt-in and should not activate for generic search or code investigation requests.
 - The skill uses bundled CLI runtime artifacts before broad workspace exploration.
-- Java and Node.js runtime artifact file versions may differ from the `--version` output.
+- Java and Node.js runtime artifact file versions should be selected by file name.
 - With current runtime artifacts, `excludeFileNamePatterns` and `excludeDirNamePatterns` replace the corresponding default exclude presets when specified. If they are omitted, default excludes are used.
 - A repository may define `.mikusoft/miku-grep.json` for repo-local defaults such as search limits, include patterns, encoding, and ignore behavior. Request JSON always takes precedence.
 
@@ -44,8 +49,17 @@ The files under `skills/miku-grep/lib/*.mjs` are Node.js helper scripts for
 agent environments that can run Node.js. They are not required to use the Java
 runtime directly.
 
-When only Java is available, call the bundled jar with request JSON on stdin and
-write result JSON from stdout:
+When only Java is available, call the bundled jar directly. Prefer args-first
+commands for quick exploration:
+
+```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+```
+
+For complex or handoff-friendly searches, request JSON on stdin still writes
+result JSON to stdout:
 
 ```bash
 java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
