@@ -40,14 +40,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          java_runtime="$(find skills/miku-grep/runtime -maxdepth 1 -type f -name 'miku-grep-*.jar' ! -name 'miku-grep-sources-*.jar' | sort -V | tail -n 1)"
-          node_runtime="$(find skills/miku-grep/runtime -maxdepth 1 -type f -name 'miku-grep-*.mjs' | sort -V | tail -n 1)"
+          runtime_root="skills/igapyon-miku-grep/runtime"
+          java_runtime="$(find "${runtime_root}" -maxdepth 1 -type f -name 'miku-grep-*.jar' ! -name 'miku-grep-sources-*.jar' | sort -V | tail -n 1)"
+          node_runtime="$(find "${runtime_root}" -maxdepth 1 -type f -name 'miku-grep-*.mjs' | sort -V | tail -n 1)"
           if [[ -z "${java_runtime}" ]]; then
-            echo "Java runtime artifact not found under skills/miku-grep/runtime/" >&2
+            echo "Java runtime artifact not found under ${runtime_root}/" >&2
             exit 1
           fi
           if [[ -z "${node_runtime}" ]]; then
-            echo "Node.js runtime artifact not found under skills/miku-grep/runtime/" >&2
+            echo "Node.js runtime artifact not found under ${runtime_root}/" >&2
             exit 1
           fi
           test -s "${java_runtime}"
