@@ -4,8 +4,9 @@ Use this reference when you need the supported operation list or the preferred C
 
 ## Operations
 
-- `search`: run a `miku-grep` request JSON through stdin and receive result JSON through stdout
-- `listFiles`: run a `mode: "listFiles"` request and receive file inventory in `files[]` / `fileSummary`
+- `search`: run `miku-grep QUERY [ROOT]` and receive readable text by default
+- `jsonSearch`: run args-first search with `--format json`, or request JSON through stdin, and receive result JSON
+- `listFiles`: run `--files` for text output or `mode: "listFiles"` / `--format json` for `files[]` / `fileSummary`
 - `version`: check that a runtime artifact starts and identifies itself as `miku-grep`
 - `help`: read the runtime CLI contract
 
@@ -24,7 +25,13 @@ Do not search broadly for alternate copies before checking these expected locati
 List Java examples before Node.js examples so agents see the Java runtime first.
 
 ```bash
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
 java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO .
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
+node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
 node skills/miku-grep/runtime/miku-grep-<version>.mjs < request.json > result.json
 ```
 
@@ -39,8 +46,9 @@ node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
 
 | Agent Skill operation | CLI backend shape | Notes |
 | --- | --- | --- |
-| `search` | `< request.json > result.json` | Primary JSON-in / JSON-out operation. |
-| `listFiles` | `< request.json > result.json` | Inventory operation using top-level `mode: "listFiles"`. |
+| `search` | `QUERY [ROOT]` | Primary quick-search operation with text output. |
+| `jsonSearch` | `QUERY [ROOT] --format json` or `< request.json > result.json` | Stable structured result operation. |
+| `listFiles` | `--files [ROOT]` or `< request.json > result.json` | Inventory operation using text output or top-level `mode: "listFiles"`. |
 | `version` | `--version` | Smoke check only. Do not require exact file-name version match. |
 | `help` | `--help` | Runtime contract reference. |
 
@@ -62,6 +70,9 @@ Runner responsibilities:
 - pass request JSON to stdin
 - collect stdout / stderr / exit status
 - optionally write stdout JSON to an output file
+
+The helper currently focuses on structured JSON execution. Agents may call the
+runtime directly for args-first text searches.
 
 Runtime responsibilities:
 

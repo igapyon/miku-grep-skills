@@ -87,6 +87,33 @@ test("reports truncation and limits file count", () => {
   assert.match(text, /Warnings: 1/);
 });
 
+test("formats agent file candidates with read ranges and snippets", () => {
+  const text = formatSearchResultSummary({
+    ok: true,
+    summary: {
+      filesVisited: 3,
+      filesMatched: 1,
+      matches: 2,
+      truncated: false
+    },
+    matches: [
+      {
+        type: "agentFile",
+        file: "src/app.txt",
+        matchCount: 2,
+        readRanges: [{ startLine: 1, endLine: 10 }],
+        representativeSnippets: [
+          { line: 3, text: "needle alpha" }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+
+  assert.match(text, /src\/app\.txt - 2 matches - read 1-10/);
+  assert.match(text, /src\/app\.txt:3: needle alpha/);
+});
+
 test("shows real root path when requested root resolves through a symlink", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "miku-grep-format-root-"));
   const realRoot = path.join(tempRoot, "real");

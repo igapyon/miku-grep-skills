@@ -3824,20 +3824,102 @@ import { pathToFileURL } from "node:url";
 
 // dist/help.js
 function helpText() {
-  return `miku-grep - local-first structured grep CLI for AI agents and automation
+  return `miku-grep - local-first grep CLI for AI agents and automation
 
 USAGE
+  miku-grep QUERY [ROOT]
+  miku-grep QUERY [ROOT] --agent
+  miku-grep QUERY [ROOT] --files
+  miku-grep QUERY [ROOT] --context N
+  miku-grep QUERY [ROOT] --format json
+  miku-grep --files [ROOT]
   miku-grep < request.json > result.json
   miku-grep --version
   miku-grep --help
 
+QUICK EXAMPLES
+  miku-grep TODO .
+  miku-grep TODO . --context 2
+  miku-grep TODO . --files
+  miku-grep TODO . --agent
+  miku-grep TODO . --format json
+  miku-grep TODO . --encoding shift_jis
+  miku-grep --files .
+
+WHEN TO USE
+  Use miku-grep when you would normally reach for rg, but want a small
+  agent-friendly next step:
+    - matching files only:        miku-grep TODO . --files
+    - first readable summary:     miku-grep TODO .
+    - nearby context:             miku-grep TODO . --context 2
+    - next-read candidates:       miku-grep TODO . --agent
+    - machine-readable result:    miku-grep TODO . --format json
+    - legacy Japanese text:       miku-grep \u691C\u7D22\u8A9E . --encoding shift_jis
+
 CONTRACT
-  Primary input is stdin JSON. Primary output is stdout JSON.
-  stdout is reserved for result JSON except --version and --help.
+  With QUERY arguments, default output is human-readable text.
+  Use --format json for structured result JSON.
+  With no arguments, stdin JSON is still accepted and stdout is result JSON.
   stderr is for usage errors, malformed stdin, progress, verbose logs, and unexpected runtime messages.
   Request JSON and result JSON use top-level "version": 1.
   Unknown request fields are validation errors.
   Result JSON is pretty-printed with 2-space indentation and a trailing newline.
+
+ARGUMENT OPTIONS
+  --agent
+    Return a compact next-read summary in text mode.
+    In JSON mode, maps to output.mode "agent", relevance sort, and readfile hints.
+
+  --files
+    With QUERY, print matching file paths.
+    Without QUERY, list files under ROOT like an agent-readable rg --files entry point.
+
+  --context N
+    Show N lines of context around content hits. Maps to output.mode "detail".
+
+  --limit N
+    Limit returned matches.
+
+  --top-files N
+    Return agent-oriented top file candidates.
+
+  --format text|json
+    Default for QUERY arguments is text. Use json for machine-readable output.
+
+  --encoding utf-8|shift_jis
+    Decode content with the selected default encoding.
+
+  --encoding-preset japanese-legacy
+    Apply Shift_JIS to common Japanese legacy text file patterns.
+
+  --ignore-case, -i
+    Case-insensitive query.
+
+  --regex
+    Treat QUERY as a regular expression.
+
+  --glob
+    Treat QUERY as a path glob and search file paths.
+
+  --path
+    Search file paths instead of file content.
+
+  --all-targets
+    Search file paths, directory paths, and content.
+
+  --detect-git-root
+    Search upward from ROOT for .git and use that directory as effective root.
+
+  --no-ignore
+    Disable ignore file handling.
+
+OPTION COMBINATIONS
+  --files, --agent/--top-files, and --context are mutually exclusive output modes.
+  --regex and --glob are mutually exclusive query modes.
+  --path and --all-targets are mutually exclusive target modes.
+  --glob implies file path search and cannot be combined with --all-targets.
+  Use miku-grep --files . for inventory.
+  Use miku-grep TODO --files or miku-grep TODO . --files for matching files.
 
 EXIT CODES
   0  ok: true, or explicit meta command such as --version / --help
@@ -4146,7 +4228,32 @@ COMMON DIAGNOSTIC CODES
     max_snippets_per_file, max_line_chars_exceeded,
     max_files_visited, max_directories_visited
 
-EXAMPLES
+ARGUMENT EXAMPLES
+  Content search:
+    miku-grep TODO .
+
+  Case-insensitive content search:
+    miku-grep repositorymap . --ignore-case
+
+  Matching files only:
+    miku-grep TODO . --files
+
+  File inventory:
+    miku-grep --files .
+
+  Context lines:
+    miku-grep TODO . --context 2
+
+  Agent next-read summary:
+    miku-grep RepositoryMap . --agent
+
+  JSON output:
+    miku-grep TODO . --format json
+
+  Japanese legacy encoding:
+    miku-grep \u691C\u7D22\u8A9E . --encoding shift_jis
+
+JSON EXAMPLES
   Content search:
     printf '%s\\n' '{"version":1,"root":".","query":{"type":"literal","text":"TODO"},"search":{"targets":["content"]}}' | miku-grep
 
@@ -5452,22 +5559,34 @@ function requireQuery(state) {
 // dist/main.js
 async function main(argv = process.argv, stdin = process.stdin, stdout = process.stdout, stderr = process.stderr) {
   try {
-    if (argv.length === 3 && argv[2] === "--version") {
+    const args = argv.slice(2);
+    if (args.length === 1 && args[0] === "--version") {
       stdout.write(`miku-grep ${await packageVersion()}
 `);
       return 0;
     }
-    if (argv.length === 3 && (argv[2] === "--help" || argv[2] === "-h")) {
+    if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
       stdout.write(helpText());
       return 0;
     }
-    if (argv.length === 3 && argv[2]?.startsWith("-")) {
-      stderr.write("usage: miku-grep [--version|--help]\n");
-      return 2;
-    }
-    if (argv.length > 2) {
-      stderr.write("usage: miku-grep [--version|--help]\n");
-      return 2;
+    if (args.length > 0) {
+      const parsed = parseArgs(args);
+      if (!parsed.ok) {
+        stderr.write(`${parsed.message}
+usage: miku-grep QUERY [ROOT] [--agent|--files|--context N|--format json]
+`);
+        return 2;
+      }
+      const result2 = await runRequest(parsed.request);
+      if (parsed.format === "json") {
+        stdout.write(`${JSON.stringify(result2, null, 2)}
+`);
+      } else if (result2.ok) {
+        stdout.write(formatTextResult(result2, parsed.textMode));
+      } else {
+        stderr.write(formatTextError(result2));
+      }
+      return result2.ok ? 0 : 1;
     }
     let request;
     try {
@@ -5486,6 +5605,236 @@ async function main(argv = process.argv, stdin = process.stdin, stdout = process
 `);
     return 3;
   }
+}
+function parseArgs(args) {
+  const positionals = [];
+  const request = {
+    version: 1,
+    root: ".",
+    query: { type: "literal", text: "" },
+    search: { targets: ["content"] },
+    output: { mode: "summary" }
+  };
+  let format = "text";
+  let textMode = "summary";
+  let filesMode = false;
+  let filesOptionIndex = -1;
+  let firstPositionalIndex = -1;
+  let agentMode = false;
+  let contextMode = false;
+  let topFilesMode = false;
+  let regexMode = false;
+  let globMode = false;
+  let pathMode = false;
+  let allTargetsMode = false;
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--format") {
+      const value = args[++i];
+      if (value !== "text" && value !== "json")
+        return { ok: false, message: "--format must be text or json" };
+      format = value;
+    } else if (arg === "--json") {
+      format = "json";
+    } else if (arg === "--agent") {
+      request.output = { ...request.output, mode: "agent", sort: "relevance", includeReadfileRequestHints: true };
+      textMode = "agent";
+      agentMode = true;
+    } else if (arg === "--files") {
+      filesMode = true;
+      filesOptionIndex = i;
+      textMode = "files";
+    } else if (arg === "--context") {
+      const value = parseNonNegativeInteger(args[++i], "--context");
+      if (!value.ok)
+        return value;
+      request.output = { ...request.output, mode: "detail", contextLines: value.value };
+      contextMode = true;
+    } else if (arg === "--limit") {
+      const value = parsePositiveInteger(args[++i], "--limit");
+      if (!value.ok)
+        return value;
+      request.output = { ...request.output, maxMatches: value.value };
+    } else if (arg === "--top-files") {
+      const value = parsePositiveInteger(args[++i], "--top-files");
+      if (!value.ok)
+        return value;
+      request.output = { ...request.output, maxMatches: value.value, mode: "agent", sort: "relevance" };
+      textMode = "agent";
+      topFilesMode = true;
+    } else if (arg === "--encoding") {
+      const value = args[++i];
+      if (value !== "utf-8" && value !== "shift_jis")
+        return { ok: false, message: "--encoding must be utf-8 or shift_jis" };
+      request.encoding = { ...request.encoding, default: value };
+    } else if (arg === "--encoding-preset") {
+      const value = args[++i];
+      if (value !== "japanese-legacy")
+        return { ok: false, message: "--encoding-preset must be japanese-legacy" };
+      request.encoding = { ...request.encoding, preset: value };
+    } else if (arg === "--ignore-case" || arg === "-i") {
+      request.query = { type: "literal", text: "", ...request.query, case: "insensitive" };
+    } else if (arg === "--regex") {
+      const currentQuery = request.query ?? { type: "literal", text: "" };
+      request.query = { ...currentQuery, type: "regex" };
+      regexMode = true;
+    } else if (arg === "--glob") {
+      const currentQuery = request.query ?? { type: "literal", text: "" };
+      request.query = { ...currentQuery, type: "glob" };
+      request.search = { ...request.search, targets: ["filepath"] };
+      globMode = true;
+    } else if (arg === "--path") {
+      request.search = { ...request.search, targets: ["filepath"] };
+      pathMode = true;
+    } else if (arg === "--all-targets") {
+      request.search = { ...request.search, targets: ["filepath", "directory", "content"] };
+      allTargetsMode = true;
+    } else if (arg === "--detect-git-root") {
+      request.detectGitRoot = true;
+    } else if (arg === "--no-ignore") {
+      request.ignore = { mode: "none" };
+    } else if (arg.startsWith("-")) {
+      return { ok: false, message: `unknown option: ${arg}` };
+    } else {
+      if (firstPositionalIndex < 0)
+        firstPositionalIndex = i;
+      positionals.push(arg);
+    }
+  }
+  const modeConflict = [filesMode, agentMode || topFilesMode, contextMode].filter(Boolean).length > 1;
+  if (modeConflict)
+    return { ok: false, message: "--files, --agent/--top-files, and --context are mutually exclusive" };
+  if (regexMode && globMode)
+    return { ok: false, message: "--regex and --glob are mutually exclusive" };
+  if (pathMode && allTargetsMode)
+    return { ok: false, message: "--path and --all-targets are mutually exclusive" };
+  if (globMode && allTargetsMode)
+    return { ok: false, message: "--glob and --all-targets are mutually exclusive" };
+  const filesInventoryMode = filesMode && (positionals.length === 0 || positionals.length === 1 && filesOptionIndex >= 0 && filesOptionIndex < firstPositionalIndex);
+  if (filesInventoryMode) {
+    delete request.query;
+    request.mode = "listFiles";
+    request.root = positionals[0] ?? ".";
+    return { ok: true, request, format, textMode };
+  }
+  if (positionals.length < 1 || positionals.length > 2) {
+    return { ok: false, message: "expected QUERY [ROOT]" };
+  }
+  request.query = { type: "literal", case: "sensitive", ...request.query, text: positionals[0] };
+  request.root = positionals[1] ?? ".";
+  if (filesMode) {
+    request.output = { ...request.output, mode: "summary" };
+    request.search = { ...request.search, targets: ensureFileTargets(request.search?.targets) };
+  }
+  return { ok: true, request, format, textMode };
+}
+function parsePositiveInteger(value, option) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0)
+    return { ok: false, message: `${option} requires a positive integer` };
+  return { ok: true, value: parsed };
+}
+function parseNonNegativeInteger(value, option) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0)
+    return { ok: false, message: `${option} requires a non-negative integer` };
+  return { ok: true, value: parsed };
+}
+function ensureFileTargets(targets) {
+  if (!targets || targets.length === 0)
+    return ["content"];
+  return targets.filter((target) => target !== "directory");
+}
+function formatTextResult(result, mode) {
+  if (mode === "files")
+    return formatFilesText(result);
+  if (mode === "agent")
+    return formatAgentText(result);
+  if (result.effectiveRequest.mode === "listFiles")
+    return formatFilesText(result);
+  return formatSummaryText(result);
+}
+function formatFilesText(result) {
+  const files = result.files && result.files.length > 0 ? result.files.map((file) => file.path) : uniqueFiles(result);
+  return files.length > 0 ? `${files.join("\n")}
+` : "";
+}
+function formatSummaryText(result) {
+  const lines = [
+    `matches: ${result.summary.matches}`,
+    `files: ${result.summary.filesMatched}`
+  ];
+  if (result.summary.directoriesMatched > 0)
+    lines.push(`directories: ${result.summary.directoriesMatched}`);
+  if (result.summary.truncated)
+    lines.push(`truncated: ${result.summary.truncatedReason ?? "true"}`);
+  if (result.diagnostics.length > 0)
+    lines.push(`diagnostics: ${result.diagnostics.length}`);
+  lines.push("");
+  for (const match of result.matches.slice(0, 20)) {
+    if (match.type === "file") {
+      lines.push(`${match.file}  ${match.matchCount} match${match.matchCount === 1 ? "" : "es"}`);
+      for (const snippet of match.snippets.slice(0, 3))
+        lines.push(`  ${snippet.line}: ${snippet.text}`);
+    } else if (match.type === "content") {
+      lines.push(`${match.file}:${match.line}:${match.column}: ${match.text}`);
+      for (const context of match.contextBefore ?? [])
+        lines.push(`  ${context.line}- ${context.text}`);
+      for (const context of match.contextAfter ?? [])
+        lines.push(`  ${context.line}+ ${context.text}`);
+    } else if (match.type === "filepath") {
+      lines.push(match.file);
+    } else if (match.type === "directory") {
+      lines.push(`${match.path}/`);
+    } else if (match.type === "agentFile") {
+      lines.push(`${match.file}  ${match.matchCount} match${match.matchCount === 1 ? "" : "es"}`);
+    } else if (match.type === "agentDirectory") {
+      lines.push(`${match.path}/  ${match.matchCount} match${match.matchCount === 1 ? "" : "es"}`);
+    }
+  }
+  return `${lines.join("\n")}
+`;
+}
+function formatAgentText(result) {
+  const lines = [
+    `matches: ${result.summary.matches}`,
+    `files: ${result.summary.filesMatched}`
+  ];
+  if (result.summary.truncated)
+    lines.push(`truncated: ${result.summary.truncatedReason ?? "true"}`);
+  lines.push("", "top files:");
+  const agentFiles = result.matches.filter((match) => match.type === "agentFile");
+  for (const match of agentFiles.slice(0, 10)) {
+    if (match.type !== "agentFile")
+      continue;
+    lines.push(`  ${match.file}  ${match.matchCount} match${match.matchCount === 1 ? "" : "es"}`);
+    for (const snippet of match.representativeSnippets.slice(0, 2))
+      lines.push(`    ${snippet.line}: ${snippet.text}`);
+  }
+  const readRanges2 = agentFiles.flatMap((match) => match.type === "agentFile" ? match.readRanges.slice(0, 1).map((range) => `${match.file}:${range.startLine}-${range.endLine}`) : []).slice(0, 10);
+  if (readRanges2.length > 0) {
+    lines.push("", "next reads:");
+    for (const range of readRanges2)
+      lines.push(`  ${range}`);
+  }
+  return `${lines.join("\n")}
+`;
+}
+function formatTextError(result) {
+  const error = result.error;
+  const lines = [`error: ${error?.code ?? "unknown"}${error?.message ? `: ${error.message}` : ""}`];
+  for (const diagnostic of result.diagnostics.slice(0, 5))
+    lines.push(`${diagnostic.severity}: ${diagnostic.code}: ${diagnostic.message}`);
+  return `${lines.join("\n")}
+`;
+}
+function uniqueFiles(result) {
+  const files = /* @__PURE__ */ new Set();
+  for (const match of result.matches) {
+    if (match.type === "file" || match.type === "filepath" || match.type === "content" || match.type === "agentFile")
+      files.add(match.file);
+  }
+  return [...files].sort();
 }
 async function runRequest(request) {
   const baseSummary = createSummary();
@@ -5573,7 +5922,7 @@ async function readStdin(stdin) {
   return Buffer.concat(chunks).toString("utf8");
 }
 async function packageVersion() {
-  const bundledVersion = "0.9.0";
+  const bundledVersion = "0.10.0";
   if (bundledVersion)
     return bundledVersion;
   try {
