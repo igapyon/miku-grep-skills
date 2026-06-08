@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   planBackendExecution,
   resolveBackendPolicy
-} from "../skills/miku-grep/lib/backend-policy.mjs";
+} from "../skills/igapyon-miku-grep/lib/backend-policy.mjs";
 
 test("resolves default backend policy", () => {
   assert.equal(resolveBackendPolicy(), "cli-preferred");

@@ -7,7 +7,7 @@ import test from "node:test";
 import {
   resolveRuntimeArtifact,
   resolveRuntimeArtifactPath
-} from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+} from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 test("resolves newest runtime artifacts by file-name version", () => {
   const java = resolveRuntimeArtifact({ kind: "java" });

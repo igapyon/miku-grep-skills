@@ -21,17 +21,17 @@ test("release zip contains skill files and excludes development-only files", () 
     encoding: "utf8"
   }).trim().split(/\n/).filter(Boolean);
 
-  assertIncludes(entries, "skills/miku-grep/SKILL.md");
-  assertIncludes(entries, "skills/miku-grep/references/INDEX.md");
-  assertIncludes(entries, "skills/miku-grep/references/runtime/operations-map.md");
-  assertIncludes(entries, "skills/miku-grep/lib/runtime-artifacts.mjs");
-  assertIncludes(entries, "skills/miku-grep/lib/backend-policy.mjs");
-  assertIncludes(entries, "skills/miku-grep/lib/backend-operations.mjs");
-  assertIncludes(entries, "skills/miku-grep/lib/cli-runner.mjs");
-  assertIncludes(entries, "skills/miku-grep/lib/repo-config.mjs");
-  assertIncludes(entries, "skills/miku-grep/lib/result-formatter.mjs");
-  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.10.0.jar");
-  assertIncludes(entries, "skills/miku-grep/runtime/miku-grep-0.10.0.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/SKILL.md");
+  assertIncludes(entries, "skills/igapyon-miku-grep/references/INDEX.md");
+  assertIncludes(entries, "skills/igapyon-miku-grep/references/runtime/operations-map.md");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/runtime-artifacts.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/backend-policy.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/backend-operations.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/cli-runner.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/repo-config.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/lib/result-formatter.mjs");
+  assertIncludes(entries, "skills/igapyon-miku-grep/runtime/miku-grep-0.10.0.jar");
+  assertIncludes(entries, "skills/igapyon-miku-grep/runtime/miku-grep-0.10.0.mjs");
 
   assert.equal(entries.some((entry) => entry.includes(".DS_Store")), false);
   assert.equal(entries.some((entry) => entry.startsWith("tests/")), false);

@@ -7,9 +7,9 @@ import test from "node:test";
 import {
   runCliOperation,
   runSearchJson
-} from "../skills/miku-grep/lib/cli-runner.mjs";
-import { formatSearchResultSummary } from "../skills/miku-grep/lib/result-formatter.mjs";
-import { resolveRuntimeArtifactPath } from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+} from "../skills/igapyon-miku-grep/lib/cli-runner.mjs";
+import { formatSearchResultSummary } from "../skills/igapyon-miku-grep/lib/result-formatter.mjs";
+import { resolveRuntimeArtifactPath } from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 test("runs search operation through file paths", () => {
   const tempRoot = createSearchFixture();

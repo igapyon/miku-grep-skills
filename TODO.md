@@ -8,10 +8,10 @@
 ## 1. Skill の基本境界を決める
 
 - [x] skill 名を決める
-  - 採用: `miku-grep`
+  - 採用: `igapyon-miku-grep`
 - [x] upstream product 名と semantic center を明記する
 - [x] activation rule を明示 opt-in にする
-  - ユーザーが `miku-grep` を明示した場合だけ起動する
+  - ユーザーが `igapyon-miku-grep` または `miku-grep` を明示した場合だけ起動する
 - [x] generic な検索、grep、ファイル調査、コード調査だけでは自動起動しないことを書く
 - [x] product boundary と non-goals を `SKILL.md` に書く
 
@@ -19,10 +19,10 @@
 
 - [x] `README.md` を作る
 - [x] `package.json` を作る
-- [x] `skills/miku-grep/SKILL.md` を作る
-- [x] `skills/miku-grep/references/INDEX.md` を作る
-- [x] `skills/miku-grep/runtime/` を作る
-- [x] `skills/miku-grep/lib/` を作る
+- [x] `skills/igapyon-miku-grep/SKILL.md` を作る
+- [x] `skills/igapyon-miku-grep/references/INDEX.md` を作る
+- [x] `skills/igapyon-miku-grep/runtime/` を作る
+- [x] `skills/igapyon-miku-grep/lib/` を作る
 - [x] `scripts/` を作る
 - [x] `tests/` を作る
 - [x] `workplace/` を作る
@@ -33,7 +33,7 @@
 
 ```text
 skills/
-  miku-grep/
+  igapyon-miku-grep/
     SKILL.md
     references/
       INDEX.md
@@ -51,7 +51,7 @@ skills/
 
 ## 3. Runtime artifact 運用を真似る
 
-- [x] upstream runtime artifact を `skills/miku-grep/runtime/` に置く方針を決める
+- [x] upstream runtime artifact を `skills/igapyon-miku-grep/runtime/` に置く方針を決める
 - [x] Java CLI runtime がある場合は single jar として扱う
 - [x] Node.js CLI runtime がある場合は single JavaScript file として扱う
 - [x] version 付き artifact 名にする
@@ -66,7 +66,7 @@ skills/
 
 ## 4. Runtime artifact resolver を作る
 
-- [x] `skills/miku-grep/lib/runtime-artifacts.mjs` を作る
+- [x] `skills/igapyon-miku-grep/lib/runtime-artifacts.mjs` を作る
 - [x] `runtime/` 内の version 付き artifact を解決する
 - [x] Java runtime、Node.js runtime、sources artifact を kind で解決できるようにする
 - [x] version 比較で最新 artifact を選ぶ
@@ -87,7 +87,7 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
 - [x] `handoff-only` では CLI を実行しない
 - [x] `cli-preferred` で CLI が使えない場合の扱いを決める
   - visible handoff に fallback する
-- [x] `skills/miku-grep/lib/backend-policy.mjs` を作る
+- [x] `skills/igapyon-miku-grep/lib/backend-policy.mjs` を作る
 - [x] policy selector の unit test を追加する
 
 対象外:
@@ -99,10 +99,10 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
 
 ## 6. Operation map を作る
 
-- [x] `skills/miku-grep/references/runtime/operations-map.md` を作る
+- [x] `skills/igapyon-miku-grep/references/runtime/operations-map.md` を作る
 - [x] skill operation 名を artifact role ベースで決める
 - [x] operation から CLI command / args を引ける registry を作る
-- [x] `skills/miku-grep/lib/backend-operations.mjs` を作る
+- [x] `skills/igapyon-miku-grep/lib/backend-operations.mjs` を作る
 - [x] CLI invocation builder は command / args を返すだけにする
 - [x] 実際の process 実行は別責務にする
 - [x] required input / output path の不足を hard error にする
@@ -122,7 +122,7 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
 ## 8. Bundle script を作る
 
 - [x] `scripts/build-skill-bundle.mjs` を作る
-- [x] `bundle/miku-grep-skills/skills/miku-grep` を生成する
+- [x] `bundle/miku-grep-skills/skills/igapyon-miku-grep` を生成する
 - [x] required runtime artifact が無い場合は build を失敗させる
 - [x] `scripts/build-skill-bundle-zip.mjs` を作る
 - [x] zip の root は `skills/` にする
@@ -176,7 +176,7 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
 ## 13. 次の強化
 
 - [x] skill-local CLI runner を追加する
-  - `skills/miku-grep/lib/cli-runner.mjs`
+  - `skills/igapyon-miku-grep/lib/cli-runner.mjs`
   - request JSON を stdin に渡し、stdout JSON / stderr / exit status を扱う
   - search logic は実装しない
 - [x] Java / Node.js runtime の同一 request parity test を追加する
@@ -200,7 +200,7 @@ MCP は対象外なので、backend policy は CLI と handoff だけに絞る�
   - artifact role
   - MCP backend policy を入れないこと
 - [x] release bundle zip の中身を検査する test を追加する
-  - `skills/miku-grep/SKILL.md`
+  - `skills/igapyon-miku-grep/SKILL.md`
   - runtime jar / mjs
   - references
   - lib

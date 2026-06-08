@@ -4,12 +4,12 @@ import test from "node:test";
 
 const docs = {
   readme: read("README.md"),
-  skill: read("skills/miku-grep/SKILL.md"),
+  skill: read("skills/igapyon-miku-grep/SKILL.md"),
   quickstart: read("docs/quickstart.md"),
   development: read("docs/development.md"),
   config: read("docs/miku-grep-skills-config.md"),
-  operationsMap: read("skills/miku-grep/references/runtime/operations-map.md"),
-  workflow: read("skills/miku-grep/references/workflow/search-workflow.md")
+  operationsMap: read("skills/igapyon-miku-grep/references/runtime/operations-map.md"),
+  workflow: read("skills/igapyon-miku-grep/references/workflow/search-workflow.md")
 };
 
 test("documents consistently declare CLI and handoff policies without MCP policies", () => {

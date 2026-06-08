@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { formatSearchResultSummary } from "../skills/miku-grep/lib/result-formatter.mjs";
+import { formatSearchResultSummary } from "../skills/igapyon-miku-grep/lib/result-formatter.mjs";
 
 test("formats successful file-summary result concisely", () => {
   const text = formatSearchResultSummary({

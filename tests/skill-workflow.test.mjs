@@ -5,9 +5,9 @@ import path from "node:path";
 import test from "node:test";
 import { execFileSync } from "node:child_process";
 
-import { runSearchJson } from "../skills/miku-grep/lib/cli-runner.mjs";
-import { formatSearchResultSummary } from "../skills/miku-grep/lib/result-formatter.mjs";
-import { resolveRuntimeArtifactPath } from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+import { runSearchJson } from "../skills/igapyon-miku-grep/lib/cli-runner.mjs";
+import { formatSearchResultSummary } from "../skills/igapyon-miku-grep/lib/result-formatter.mjs";
+import { resolveRuntimeArtifactPath } from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 test("runs the normal skill workflow from request JSON to visible summary", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "miku-grep-workflow-test-"));

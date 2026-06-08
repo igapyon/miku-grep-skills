@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveRuntimeArtifact } from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+import { resolveRuntimeArtifact } from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,14 +11,14 @@ const repoRoot = path.resolve(__dirname, "..");
 
 const bundleRoot = path.resolve(repoRoot, "bundle/miku-grep-skills");
 const bundleSkillsRoot = path.resolve(bundleRoot, "skills");
-const sourceSkillRoot = path.resolve(repoRoot, "skills/miku-grep");
+const sourceSkillRoot = path.resolve(repoRoot, "skills/igapyon-miku-grep");
 const sourceRuntimeRoot = path.resolve(sourceSkillRoot, "runtime");
 
 main();
 
 function main() {
-  ensureSourceExists(sourceSkillRoot, "skills/miku-grep");
-  ensureSourceExists(sourceRuntimeRoot, "skills/miku-grep/runtime");
+  ensureSourceExists(sourceSkillRoot, "skills/igapyon-miku-grep");
+  ensureSourceExists(sourceRuntimeRoot, "skills/igapyon-miku-grep/runtime");
 
   const javaRuntime = resolveRequiredArtifact("java");
   const nodeRuntime = resolveRequiredArtifact("node");
@@ -35,7 +35,7 @@ function main() {
   });
   fs.mkdirSync(bundleSkillsRoot, { recursive: true });
 
-  const bundleSkillRoot = path.resolve(bundleSkillsRoot, "miku-grep");
+  const bundleSkillRoot = path.resolve(bundleSkillsRoot, "igapyon-miku-grep");
   fs.mkdirSync(bundleSkillRoot, { recursive: true });
   fs.cpSync(sourceSkillRoot, bundleSkillRoot, {
     recursive: true,
@@ -43,16 +43,16 @@ function main() {
   });
 
   const included = [
-    `  - skills/miku-grep/runtime/${javaRuntime.name}`,
-    `  - skills/miku-grep/runtime/${nodeRuntime.name}`,
-    ...optionalArtifacts.map((artifact) => `  - skills/miku-grep/runtime/${artifact.name}`)
+    `  - skills/igapyon-miku-grep/runtime/${javaRuntime.name}`,
+    `  - skills/igapyon-miku-grep/runtime/${nodeRuntime.name}`,
+    ...optionalArtifacts.map((artifact) => `  - skills/igapyon-miku-grep/runtime/${artifact.name}`)
   ];
 
   process.stdout.write([
     "[build:bundle] generated bundle/miku-grep-skills",
     "[build:bundle] copy this directory's contents under your skill home root",
     "[build:bundle] included:",
-    "  - skills/miku-grep",
+    "  - skills/igapyon-miku-grep",
     ...included
   ].join("\n"));
   process.stdout.write("\n");
