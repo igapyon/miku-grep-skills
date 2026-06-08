@@ -19,11 +19,11 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 
 ## Quick Start
 
-1. Put runtime artifacts under `skills/miku-grep/runtime/`.
+1. Put runtime artifacts under `skills/igapyon-miku-grep/runtime/`.
 2. Run `npm test`.
 3. Run `npm run build:bundle`.
-4. Install the generated `bundle/miku-grep-skills/skills/miku-grep` directory into your skill home.
-5. In conversation, explicitly start with `miku-grep`.
+4. Install the generated `bundle/miku-grep-skills/skills/igapyon-miku-grep` directory into your skill home.
+5. In conversation, explicitly start with `igapyon-miku-grep` or `miku-grep`.
 
 Typical requests:
 
@@ -45,7 +45,7 @@ Typical requests:
 
 ## Java-Only Environments
 
-The files under `skills/miku-grep/lib/*.mjs` are Node.js helper scripts for
+The files under `skills/igapyon-miku-grep/lib/*.mjs` are Node.js helper scripts for
 agent environments that can run Node.js. They are not required to use the Java
 runtime directly.
 
@@ -53,16 +53,16 @@ When only Java is available, call the bundled jar directly. Prefer args-first
 commands for quick exploration:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
 ```
 
 For complex or handoff-friendly searches, request JSON on stdin still writes
 result JSON to stdout:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 In that mode, `SKILL.md` and `references/` provide the operating instructions,
@@ -76,8 +76,8 @@ according to the documented precedence.
 
 Expected runtime artifact names:
 
-- `skills/miku-grep/runtime/miku-grep-<version>.jar`
-- `skills/miku-grep/runtime/miku-grep-<version>.mjs`
+- `skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar`
+- `skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs`
 
 ## Developer Documents
 
@@ -85,7 +85,7 @@ Expected runtime artifact names:
 - [docs/development.md](docs/development.md)
 - [docs/miku-grep-skills-config.md](docs/miku-grep-skills-config.md)
 - [docs/skill-installation.md](docs/skill-installation.md)
-- [skills/miku-grep/references/INDEX.md](skills/miku-grep/references/INDEX.md)
+- [skills/igapyon-miku-grep/references/INDEX.md](skills/igapyon-miku-grep/references/INDEX.md)
 
 ## License
 

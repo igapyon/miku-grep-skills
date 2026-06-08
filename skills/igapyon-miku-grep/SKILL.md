@@ -1,6 +1,6 @@
 ---
-name: miku-grep
-description: Use only when the user explicitly says `miku-grep` for miku-grep-specific structured local search workflows. This skill runs the bundled miku-grep CLI runtime and returns concise structured search summaries; do not auto-activate it for generic search, grep, file investigation, or code review requests.
+name: igapyon-miku-grep
+description: Use only when the user explicitly says `igapyon-miku-grep` or `miku-grep` for miku-grep-specific structured local search workflows. This skill runs the bundled miku-grep CLI runtime and returns concise structured search summaries; do not auto-activate it for generic search, grep, file investigation, or code review requests.
 ---
 
 # Miku Grep
@@ -14,6 +14,7 @@ Do not trigger it from generic words such as search, grep, find, scan, file inve
 
 Start `miku-grep` mode when at least one of these explicit triggers is present:
 
+- the user names `igapyon-miku-grep`
 - the user names `miku-grep`
 - the recent conversation is already in an active `miku-grep` workflow from an earlier explicit trigger
 
@@ -137,7 +138,7 @@ Policy values:
 For `cli-only` and `cli-preferred`, use this runtime order:
 
 1. read this `SKILL.md`
-2. check versioned runtime artifacts matching `skills/miku-grep/runtime/miku-grep-*.jar` and `skills/miku-grep/runtime/miku-grep-*.mjs`
+2. check versioned runtime artifacts matching `skills/igapyon-miku-grep/runtime/miku-grep-*.jar` and `skills/igapyon-miku-grep/runtime/miku-grep-*.mjs`
 3. prefer the newest Java jar for operations it supports
 4. use the newest Node.js `.mjs` when the Java runtime is missing or unsuitable
 5. only if the declared path is missing or unusable, report the runtime-path problem
@@ -155,10 +156,10 @@ If the active environment has Java but does not have Node.js, use the Java jar
 directly:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 In Java-only mode, follow this `SKILL.md` and the references manually. The Java

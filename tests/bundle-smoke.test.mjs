@@ -5,7 +5,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import test from "node:test";
 
-import { resolveRuntimeArtifactPath } from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+import { resolveRuntimeArtifactPath } from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 const ROOT = process.cwd();
 const buildScriptPath = path.resolve(ROOT, "scripts/build-skill-bundle.mjs");
@@ -18,7 +18,7 @@ test("builds bundle and runs runtime artifacts from isolated install tree", () =
 
   const builtRuntimeRoot = path.resolve(
     ROOT,
-    "bundle/miku-grep-skills/skills/miku-grep/runtime"
+    "bundle/miku-grep-skills/skills/igapyon-miku-grep/runtime"
   );
   assert.ok(fs.existsSync(resolveRuntimeArtifactPath({
     kind: "java",
@@ -36,9 +36,9 @@ test("builds bundle and runs runtime artifacts from isolated install tree", () =
       recursive: true
     });
 
-    const isolatedRuntimeRoot = path.resolve(isolatedSkillRoot, "miku-grep/runtime");
+    const isolatedRuntimeRoot = path.resolve(isolatedSkillRoot, "igapyon-miku-grep/runtime");
     assert.equal(
-      fs.existsSync(path.resolve(isolatedSkillRoot, "miku-grep/.DS_Store")),
+      fs.existsSync(path.resolve(isolatedSkillRoot, "igapyon-miku-grep/.DS_Store")),
       false
     );
 

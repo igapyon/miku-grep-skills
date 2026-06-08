@@ -5,11 +5,11 @@ This document explains the shortest current path for trying `miku-grep-skills`.
 ## Summary
 
 1. Keep this repository open as the workspace root.
-2. Confirm runtime artifacts exist under `skills/miku-grep/runtime/`.
+2. Confirm runtime artifacts exist under `skills/igapyon-miku-grep/runtime/`.
 3. Run `npm test`.
 4. Run `npm run build:bundle`.
-5. Install `bundle/miku-grep-skills/skills/miku-grep` into your skill home.
-6. Start a request with `miku-grep`.
+5. Install `bundle/miku-grep-skills/skills/igapyon-miku-grep` into your skill home.
+6. Start a request with `igapyon-miku-grep` or `miku-grep`.
 
 ## Execution Policy
 
@@ -36,7 +36,7 @@ Because this gate is prompt-driven, it can fail to trigger if the agent does not
 Expected runtime files:
 
 ```text
-skills/miku-grep/runtime/
+skills/igapyon-miku-grep/runtime/
   miku-grep-<version>.jar
   miku-grep-<version>.mjs
 ```
@@ -44,7 +44,7 @@ skills/miku-grep/runtime/
 Source artifacts may also be present:
 
 ```text
-skills/miku-grep/runtime/
+skills/igapyon-miku-grep/runtime/
   miku-grep-sources-<version>.jar
   miku-grep-sources-<version>.tgz
 ```
@@ -104,18 +104,18 @@ Do not put `root` or `query` in repo-local config. See
 ## Example Commands
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --context 2
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --context 2
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
 ```
 
 Node.js runtime equivalent:
 
 ```bash
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO .
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO .
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
 ```
 
 ## Example Request JSON
@@ -167,13 +167,13 @@ Use `listFiles` for agent-readable file inventory:
 For direct structured CLI use:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 or:
 
 ```bash
-node skills/miku-grep/runtime/miku-grep-<version>.mjs < request.json > result.json
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs < request.json > result.json
 ```
 
 ## Output Location

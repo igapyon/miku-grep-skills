@@ -14,8 +14,8 @@ Use this reference when you need the supported operation list or the preferred C
 
 Prefer bundled runtime artifacts:
 
-- `skills/miku-grep/runtime/miku-grep-<version>.jar`
-- `skills/miku-grep/runtime/miku-grep-<version>.mjs`
+- `skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar`
+- `skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs`
 
 Resolve the actual versioned artifact under `runtime/` before invoking the CLI.
 Do not search broadly for alternate copies before checking these expected locations.
@@ -25,21 +25,21 @@ Do not search broadly for alternate copies before checking these expected locati
 List Java examples before Node.js examples so agents see the Java runtime first.
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO .
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO .
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
-node skills/miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
-node skills/miku-grep/runtime/miku-grep-<version>.mjs < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO .
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --agent
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar TODO . --format json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO .
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO . --agent
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs TODO . --format json
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs < request.json > result.json
 ```
 
 Meta commands:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar --version
-node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar --version
+node skills/igapyon-miku-grep/runtime/miku-grep-<version>.mjs --version
 ```
 
 ## CLI Operation Correspondence
@@ -54,14 +54,14 @@ node skills/miku-grep/runtime/miku-grep-<version>.mjs --version
 
 ## Skill-Local Runner
 
-The helper `skills/miku-grep/lib/cli-runner.mjs` is a thin adapter over the CLI runtime.
+The helper `skills/igapyon-miku-grep/lib/cli-runner.mjs` is a thin adapter over the CLI runtime.
 It may execute the bundled Java or Node.js artifact, but it must not implement search logic itself.
 
 The helper is optional. It requires Node.js. In a Java-only environment, skip the
 helper and call the Java runtime directly:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 Runner responsibilities:

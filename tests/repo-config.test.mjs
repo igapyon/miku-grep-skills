@@ -7,7 +7,7 @@ import test from "node:test";
 import {
   applyMikuGrepRepoConfig,
   loadMikuGrepRepoConfig
-} from "../skills/miku-grep/lib/repo-config.mjs";
+} from "../skills/igapyon-miku-grep/lib/repo-config.mjs";
 
 test("loads repo-local miku-grep config from request root", () => {
   const tempRoot = createTempRepo({

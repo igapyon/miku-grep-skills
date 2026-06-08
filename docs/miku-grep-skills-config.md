@@ -160,7 +160,7 @@ Example Java-only request derived from `.mikusoft/miku-grep.json`:
 Then run:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 ## Git Tracking Policy

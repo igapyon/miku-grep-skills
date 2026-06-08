@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { resolveRuntimeArtifactPath } from "../skills/miku-grep/lib/runtime-artifacts.mjs";
+import { resolveRuntimeArtifactPath } from "../skills/igapyon-miku-grep/lib/runtime-artifacts.mjs";
 
 test("Java runtime starts and prints miku-grep version", () => {
   const javaRuntimePath = resolveRuntimeArtifactPath({ kind: "java" });

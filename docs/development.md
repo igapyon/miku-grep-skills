@@ -6,12 +6,12 @@
 - [miku-grep-skills-config.md](miku-grep-skills-config.md)
 - [skill-installation.md](skill-installation.md)
 - [../TODO.md](../TODO.md)
-- [../skills/miku-grep/SKILL.md](../skills/miku-grep/SKILL.md)
-- [../skills/miku-grep/references/INDEX.md](../skills/miku-grep/references/INDEX.md)
+- [../skills/igapyon-miku-grep/SKILL.md](../skills/igapyon-miku-grep/SKILL.md)
+- [../skills/igapyon-miku-grep/references/INDEX.md](../skills/igapyon-miku-grep/references/INDEX.md)
 
 ## Runtime Artifact Operation
 
-`miku-grep-skills` uses runtime artifacts under `skills/miku-grep/runtime/`.
+`miku-grep-skills` uses runtime artifacts under `skills/igapyon-miku-grep/runtime/`.
 Normal skill operation should not depend on an upstream source tree.
 
 Expected artifacts:
@@ -77,7 +77,7 @@ The generated installable tree is:
 ```text
 bundle/miku-grep-skills/
   skills/
-    miku-grep/
+    igapyon-miku-grep/
 ```
 
 Run this for a zip:

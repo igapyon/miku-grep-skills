@@ -82,7 +82,7 @@ If Node.js is unavailable, do not use the `lib/*.mjs` helpers. Prepare
 `request.json` and invoke the Java runtime directly:
 
 ```bash
-java -jar skills/miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
+java -jar skills/igapyon-miku-grep/runtime/miku-grep-<version>.jar < request.json > result.json
 ```
 
 Then inspect `result.json`. The runtime result is the authoritative artifact.
@@ -151,7 +151,7 @@ If `ok` is true but diagnostics or truncation are present, report the result and
 Do not paste the whole result JSON into the conversation unless the user asks for it.
 Prefer a compact summary with the most relevant files, line numbers, and diagnostic counts.
 
-The helper `skills/miku-grep/lib/result-formatter.mjs` provides the default concise display summary.
+The helper `skills/igapyon-miku-grep/lib/result-formatter.mjs` provides the default concise display summary.
 Treat that `search_result_summary` as a display artifact derived from `search_result_json`, not as a replacement for the original result JSON.
 
 ## Hard Errors

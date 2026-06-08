@@ -2,7 +2,7 @@
 
 ## Target
 
-Install the generated `miku-grep` skill into an agent skill home.
+Install the generated `igapyon-miku-grep` skill into an agent skill home.
 
 ## Build
 
@@ -17,7 +17,7 @@ This creates:
 ```text
 bundle/miku-grep-skills/
   skills/
-    miku-grep/
+    igapyon-miku-grep/
       SKILL.md
       references/
       runtime/
@@ -25,7 +25,7 @@ bundle/miku-grep-skills/
 
 ## Install
 
-Copy the generated `skills/miku-grep` directory under your skill home `skills/` directory.
+Copy the generated `skills/igapyon-miku-grep` directory under your skill home `skills/` directory.
 
 Do not copy only `SKILL.md`.
 The `runtime/` directory is required for normal CLI execution.
@@ -38,4 +38,4 @@ After installation, start with an explicit request such as:
 miku-grep, search this workspace for TODO and summarize matching files.
 ```
 
-The skill should not activate for generic search requests that do not name `miku-grep`.
+The skill should not activate for generic search requests that do not name `igapyon-miku-grep` or `miku-grep`.

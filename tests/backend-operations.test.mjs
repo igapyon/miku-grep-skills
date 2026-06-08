@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   buildCliInvocation,
   operationCapabilities
-} from "../skills/miku-grep/lib/backend-operations.mjs";
+} from "../skills/igapyon-miku-grep/lib/backend-operations.mjs";
 
 test("builds Java CLI invocation for search", () => {
   const invocation = buildCliInvocation({

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const DEFAULT_RUNTIME_ROOT = "skills/miku-grep/runtime";
+export const DEFAULT_RUNTIME_ROOT = "skills/igapyon-miku-grep/runtime";
 
 const artifactDefinitions = {
   java: {
